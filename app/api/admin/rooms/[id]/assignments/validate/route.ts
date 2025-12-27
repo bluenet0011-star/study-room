@@ -32,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
         if (!seatLabel || !name) continue; // Skip empty rows
 
-        const seat = seats.find(s => s.label === seatLabel.toString());
+        const seat = seats.find((s: any) => s.label === seatLabel.toString());
         if (!seat) {
             warnings.push(`좌석 번호 '${seatLabel}'가 존재하지 않습니다.`);
             continue;
