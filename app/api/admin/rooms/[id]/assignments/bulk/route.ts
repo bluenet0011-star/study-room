@@ -19,7 +19,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Schema: Seat has `assignments`.
 
     try {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             for (const item of assignments) {
                 // Remove existing assignment for this seat
                 await tx.seatAssignment.deleteMany({

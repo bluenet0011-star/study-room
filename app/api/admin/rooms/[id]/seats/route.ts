@@ -31,7 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { seats } = body;
 
     // Transaction: Sync state (Delete missing, Upsert provided)
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
         const currentSeats = await tx.seat.findMany({ where: { roomId: resolvedParams.id } });
 
         // Incoming IDs that actually exist (exclude 'new-...' temporary IDs)
@@ -40,8 +40,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             .filter((id: any) => id && !id.startsWith('new-'));
 
         const toDeleteIds = currentSeats
-            .filter(s => !incomingExistingIds.includes(s.id))
-            .map(s => s.id);
+            .filter((s: any) => !incomingExistingIds.includes(s.id))
+            .map((s: any) => s.id);
 
         if (toDeleteIds.length > 0) {
             await tx.seat.deleteMany({ where: { id: { in: toDeleteIds } } });
