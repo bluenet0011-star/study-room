@@ -2,6 +2,12 @@ import fs from 'fs';
 import path from 'path';
 
 export function scheduleBackup() {
+    // Skip backup on Vercel (serverless environment)
+    if (process.env.VERCEL) {
+        console.log("[System] Backup disabled on Vercel");
+        return;
+    }
+
     console.log("[System] Initializing Backup Service...");
 
     const BACKUP_DIR = path.join(process.cwd(), 'backups');
