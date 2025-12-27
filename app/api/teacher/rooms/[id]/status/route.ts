@@ -35,7 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     activePermissions.forEach(p => permissionMap.set(p.studentId, p));
 
     // Combine Data
-    const seatData = seats.map(seat => {
+    const seatData = seats.map((seat: any) => {
         const assignment = seat.assignments[0]; // Assuming 1 active assignment per seat
         let status = 'EMPTY';
         let student = null;

@@ -30,6 +30,8 @@ model User {
   writtenLostItems LostItem[]      @relation("WrittenLostItems")
   emptyPeriods    EmptyPeriod[]    @relation("StudentEmptyPeriods")
   notifications   Notification[]
+  eventAttendances EventAttendance[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Room {
