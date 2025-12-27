@@ -31,14 +31,14 @@ export async function POST(req: Request) {
         });
 
         for (const item of assignments) { // { seatLabel, studentName }
-            const seat = seats.find(s => s.label === item.seatLabel);
+            const seat = seats.find((s: any) => s.label === item.seatLabel);
             if (!seat) {
                 results.errors.push(`Seat '${item.seatLabel}' not found`);
                 continue;
             }
 
             // Find student by Name (first match)
-            const student = students.find(s => s.name === item.studentName);
+            const student = students.find((s: any) => s.name === item.studentName);
             // OR checks loginId?
             // const student = students.find(s => s.name === item.studentName || s.loginId === item.studentName);
 
