@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id            String    @id @default(cuid())
+  role          String      @default("STUDENT")
+  loginId       String    @unique
+  passwordHash  String
+  name          String
+  grade         Int?
+  class         Int?
+  number        Int?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  assignedSeats   SeatAssignment[]
+  permissions     Permission[]     @relation("StudentPermissions")
+  teacherPermissions Permission[] @relation("TeacherPermissions")
+  writtenNotices  Notice[]         @relation("WrittenNotices")
+  writtenLostItems LostItem[]      @relation("WrittenLostItems")
+  emptyPeriods    EmptyPeriod[]    @relation("StudentEmptyPeriods")
+  notifications   Notification[]
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String
+  grade     Int?     // Target grade level (1, 2, 3)
+  active    Boolean  @default(true)
+  seats     Seat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Seat {
+  id        String   @id @default(cuid())
+  roomId    String
+  label     String   // Display number/text
+  x         Int      // Grid coordinates or absolute position
+  y         Int
+  active    Boolean  @default(true)
+  
+  room      Room     @relation(fields: [roomId], references: [id])
+  assignments SeatAssignment[]
+
+  @@index([roomId])
+}
+
+model SeatAssignment {
+  id        String   @id @default(cuid())
+  seatId    String
+  userId    String
+  active    Boolean  @default(true)
+  startDate DateTime @default(now())
+  endDate   DateTime?
+
+  seat      Seat     @relation(fields: [seatId], references: [id])
+  student   User     @relation(fields: [userId], references: [id])
+
+  @@index([seatId])
+  @@index([userId])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  studentId   String
+  teacherId   String?
+  status      String @default("PENDING")
+  type        String   @default("MOVEMENT")
+  start       DateTime         // Planned start time
+  end         DateTime         // Planned end time
+  reason      String
+  location    String?          // Location of permission (e.g., specific room or destination)
+  teacherNote String?
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  student     User             @relation("StudentPermissions", fields: [studentId], references: [id])
+  teacher     User?            @relation("TeacherPermissions", fields: [teacherId], references: [id])
+
+  @@index([studentId])
+  @@index([teacherId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  target    String?
+  important Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation("WrittenNotices", fields: [authorId], references: [id])
+}
+
+model EmptyPeriod {
+  id        String   @id @default(cuid())
+  studentId String
+  date      DateTime // Date of the empty period
+  start     DateTime // Start Time
+  end       DateTime // End Time
+  location  String
+  memo      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student   User     @relation("StudentEmptyPeriods", fields: [studentId], references: [id])
+}
+
+model LostItem {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  imagePath String?
+  location  String?
+  status    String   @default("LOST") // LOST, FOUND
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User     @relation("WrittenLostItems", fields: [authorId], references: [id])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime @default(now())
+  type      String   @default("QR_CHECKIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  attendances EventAttendance[]
+}
+
+model EventAttendance {
+  id        String   @id @default(cuid())
+  eventId   String
+  studentId String
+  scannedAt DateTime @default(now())
+  
+  event     Event    @relation(fields: [eventId], references: [id])
+  student   User     @relation(fields: [studentId], references: [id])
+
+  @@unique([eventId, studentId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  keys      String   // JSON string of { p256dh, auth }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}

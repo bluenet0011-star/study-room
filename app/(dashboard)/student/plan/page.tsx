@@ -1,0 +1,209 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch'; // Ensure you have this component or use standard checkbox
+import { Loader2, Calendar } from 'lucide-react';
+import { useSocket } from '@/components/providers/SocketProvider';
+import { useSession } from 'next-auth/react';
+import { Checkbox } from '@/components/ui/checkbox'; // Fallback if switch unavailable
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+interface Teacher {
+    id: string;
+    name: string;
+}
+
+export default function StudyPlanPage() {
+    const router = useRouter();
+    const { data: session } = useSession();
+    const socket = useSocket();
+    const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        type: 'MOVEMENT',
+        teacherId: '',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        startTime: '18:00',
+        endTime: '21:00',
+        reason: '',
+        location: '',
+        onCampus: true
+    });
+
+    useEffect(() => {
+        fetch('/api/users/teachers').then(res => res.json()).then(setTeachers);
+    }, []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formData.teacherId) {
+            toast.error("담당 선생님을 선택해주세요.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const startStr = `${formData.startDate}T${formData.startTime}`;
+            const endStr = `${formData.endDate}T${formData.endTime}`;
+
+            const res = await fetch('/api/student/permissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: formData.type,
+                    teacherId: formData.teacherId,
+                    start: new Date(startStr).toISOString(),
+                    end: new Date(endStr).toISOString(),
+                    reason: formData.reason,
+                    location: formData.location
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (socket) {
+                    socket.emit('NEW_PERMISSION', {
+                        ...data,
+                        studentName: session?.user?.name,
+                    });
+                }
+                toast.success("학습계획이 신청되었습니다.");
+                router.push('/student/status');
+            } else {
+                toast.error("신청에 실패했습니다. 입력값을 확인해주세요.");
+            }
+        } catch (e) {
+            console.error("Submission error", e);
+            toast.error("오류가 발생했습니다.");
+        }
+        setLoading(false);
+    };
+
+    return (
+        <div className="p-6 max-w-2xl mx-auto">
+            <h1 className="text-2xl font-bold mb-2">학습계획 / 이동 신청</h1>
+            <p className="text-gray-500 mb-6">자습 시간 중 이동이나 학습 계획을 신청합니다.</p>
+
+            <Card className="border-t-4 border-t-blue-500 shadow-md">
+                <CardHeader className="bg-gray-50/50 pb-4">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-blue-600" />
+                        신청서 작성
+                    </CardTitle>
+                    <CardDescription>
+                        교내 이동, 외출, 조퇴 등 필요한 퍼미션을 신청하세요.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="flex items-center space-x-4 p-4 border rounded-lg bg-gray-50/50">
+                            <Label htmlFor="on-campus" className="flex-1 font-medium">교내 활동 여부</Label>
+                            <div className="flex items-center space-x-2">
+                                <div className="flex items-center gap-1 cursor-pointer" onClick={() => setFormData({ ...formData, onCampus: false })}>
+                                    <div className={cn("w-4 h-4 border rounded flex items-center justify-center", !formData.onCampus ? "bg-gray-900 border-gray-900" : "border-gray-400 bg-white")}>
+                                        {!formData.onCampus && <div className="w-2 h-2 bg-white rounded-[1px]" />}
+                                    </div>
+                                    <span className={!formData.onCampus ? "font-bold text-gray-900" : "text-gray-500"}>교외</span>
+                                </div>
+                                <Switch
+                                    id="on-campus"
+                                    checked={formData.onCampus}
+                                    onCheckedChange={(c: boolean) => setFormData({ ...formData, onCampus: c })}
+                                    className="data-[state=checked]:bg-green-600"
+                                />
+                                <div className="flex items-center gap-1 cursor-pointer" onClick={() => setFormData({ ...formData, onCampus: true })}>
+                                    <div className={cn("w-4 h-4 border rounded flex items-center justify-center", formData.onCampus ? "bg-green-600 border-green-600" : "border-gray-400 bg-white")}>
+                                        {formData.onCampus && <div className="w-2 h-2 bg-white rounded-[1px]" />}
+                                    </div>
+                                    <span className={formData.onCampus ? "font-bold text-green-600" : "text-gray-500"}>교내</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>유형</Label>
+                                <Select onValueChange={val => setFormData({ ...formData, type: val })} defaultValue={formData.type}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="MOVEMENT">이동 (교내)</SelectItem>
+                                        <SelectItem value="OUTING">외출</SelectItem>
+                                        <SelectItem value="EARLY_LEAVE">조퇴</SelectItem>
+                                        <SelectItem value="OTHER">기타</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>장소명</Label>
+                                <Input
+                                    value={formData.location}
+                                    onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                    placeholder="예: 1-1, OO병원, 자택"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>시작 일시</Label>
+                                <div className="flex gap-2">
+                                    <Input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} required />
+                                    <Input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} required />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>종료 일시</Label>
+                                <div className="flex gap-2">
+                                    <Input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} required />
+                                    <Input type="time" value={formData.endTime} onChange={e => setFormData({ ...formData, endTime: e.target.value })} required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>담당 선생님</Label>
+                            <Select onValueChange={val => setFormData({ ...formData, teacherId: val })}>
+                                <SelectTrigger className="bg-yellow-50/50 border-yellow-200">
+                                    <SelectValue placeholder="선생님을 선택해주세요 (필수)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teachers.map(t => (
+                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>사유</Label>
+                            <Textarea
+                                value={formData.reason}
+                                onChange={e => setFormData({ ...formData, reason: e.target.value })}
+                                placeholder="구체적인 사유를 입력하세요."
+                                className="min-h-[100px]"
+                                required
+                            />
+                        </div>
+
+                        <div className="pt-2">
+                            <Button type="submit" className="w-full h-12 text-lg" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                                신청하기
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
