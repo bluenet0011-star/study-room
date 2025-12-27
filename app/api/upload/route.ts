@@ -3,11 +3,7 @@ import path from 'path';
 import { writeFile } from 'fs/promises';
 import fs from 'fs';
 
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
+
 
 export async function POST(request: Request) {
     try {
