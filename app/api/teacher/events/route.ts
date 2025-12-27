@@ -22,58 +22,57 @@ function saveJsonEvents(events: any[]) {
 
 export async function GET() {
     try {
-        try {
-            // Try DB first
+        // Try DB first
+        // @ts-ignore
+        const events = await prisma.event.findMany({
+            orderBy: { date: 'desc' },
             // @ts-ignore
-            const events = await prisma.event.findMany({
-                orderBy: { date: 'desc' },
-                // @ts-ignore
-                include: { _count: { select: { attendances: true } } }
-            });
+            include: { _count: { select: { attendances: true } } }
+        });
 
-            const formatted = events.map((e: any) => ({
-                id: e.id,
-                title: e.title,
-                date: e.date.toISOString().split('T')[0],
-                count: e._count.attendances
-            }));
-            return NextResponse.json(formatted);
+        const formatted = events.map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            date: e.date.toISOString().split('T')[0],
+            count: e._count.attendances
+        }));
+        return NextResponse.json(formatted);
 
-        } catch (e) {
-            // Fallback to JSON
-            console.warn("DB failed, using JSON fallback for events");
-            return NextResponse.json(getJsonEvents());
-        }
+    } catch (e) {
+        // Fallback to JSON
+        console.warn("DB failed, using JSON fallback for events");
+        return NextResponse.json(getJsonEvents());
     }
+}
 
 export async function POST(req: Request) {
-        try {
-            const body = await req.json();
+    try {
+        const body = await req.json();
 
-            try {
-                // Try DB
-                // @ts-ignore
-                const event = await prisma.event.create({
-                    data: {
-                        title: body.title,
-                        date: new Date()
-                    }
-                });
-                return NextResponse.json(event);
-            } catch (dbError) {
-                // Fallback
-                const events = getJsonEvents();
-                const newEvent = {
-                    id: Date.now().toString(),
+        try {
+            // Try DB
+            // @ts-ignore
+            const event = await prisma.event.create({
+                data: {
                     title: body.title,
-                    date: new Date().toISOString().split('T')[0],
-                    count: 0
-                };
-                events.unshift(newEvent);
-                saveJsonEvents(events);
-                return NextResponse.json(newEvent);
-            }
-        } catch (e) {
-            return new NextResponse("Error", { status: 500 });
+                    date: new Date()
+                }
+            });
+            return NextResponse.json(event);
+        } catch (dbError) {
+            // Fallback
+            const events = getJsonEvents();
+            const newEvent = {
+                id: Date.now().toString(),
+                title: body.title,
+                date: new Date().toISOString().split('T')[0],
+                count: 0
+            };
+            events.unshift(newEvent);
+            saveJsonEvents(events);
+            return NextResponse.json(newEvent);
         }
+    } catch (e) {
+        return new NextResponse("Error", { status: 500 });
     }
+}
