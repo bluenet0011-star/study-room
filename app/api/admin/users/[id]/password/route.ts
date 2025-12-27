@@ -16,7 +16,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         await prisma.user.update({
             where: { id: resolvedParams.id },
-            data: { password: hashedPassword }
+            data: { passwordHash: hashedPassword }
         });
 
         return NextResponse.json({ success: true });
