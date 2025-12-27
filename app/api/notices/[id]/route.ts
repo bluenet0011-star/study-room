@@ -11,16 +11,18 @@ const noticeSchema = z.object({
 });
 
 // GET handler
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const notice = await prisma.notice.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: { author: { select: { name: true } } }
     });
     if (!notice) return new NextResponse("Not found", { status: 404 });
     return NextResponse.json(notice);
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const session = await auth();
     if (session?.user?.role === 'STUDENT') return new NextResponse("Unauthorized", { status: 401 });
 
@@ -29,7 +31,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         const data = noticeSchema.parse(body);
 
         const notice = await prisma.notice.update({
-            where: { id: params.id },
+            where: { id },
             data
         });
 
@@ -39,13 +41,15 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await auth();
     if (session?.user?.role === 'STUDENT') return new NextResponse("Unauthorized", { status: 401 });
 
+    const { id } = await params;
+
     try {
         await prisma.notice.delete({
-            where: { id: params.id }
+            where: { id }
         });
         return new NextResponse(null, { status: 204 });
     } catch (e) {
