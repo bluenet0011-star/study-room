@@ -26,6 +26,10 @@ export function NotificationBell() {
     useEffect(() => {
         if (!session?.user?.id) return;
         fetchNotifications();
+
+        // Poll for notifications every 10 seconds
+        const interval = setInterval(fetchNotifications, 10000);
+        return () => clearInterval(interval);
     }, [session]);
 
     const fetchNotifications = async () => {

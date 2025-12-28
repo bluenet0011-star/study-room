@@ -62,7 +62,15 @@ export async function POST(req: Request) {
             include: { student: { select: { name: true } } }
         });
 
-
+        // Create Notification for the teacher
+        await prisma.notification.create({
+            data: {
+                userId: data.teacherId,
+                title: "새로운 퍼미션 신청",
+                message: `${session.user.name} 학생이 ${data.type === 'MOVEMENT' ? '이동' : data.type === 'OUTING' ? '외출' : '기타'} 퍼미션을 신청했습니다.`,
+                read: false
+            }
+        });
 
         return NextResponse.json(permission);
 

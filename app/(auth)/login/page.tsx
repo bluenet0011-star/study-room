@@ -78,15 +78,15 @@ function LoginForm() {
 
                 <div className="flex flex-col items-center mb-8">
                     <Image
-                        src="/logo.png"
+                        src="/school-logo.png"
                         alt="Logo"
                         width={120}
                         height={120}
                         className="mb-4 object-contain"
                         priority
                     />
-                    <h1 className="text-2xl font-bold text-gray-900">Study Room</h1>
-                    <p className="text-gray-500 text-sm mt-1">면학실 관리 시스템</p>
+                    <h1 className="text-2xl font-bold text-red-600">DGHS</h1>
+                    <p className="text-gray-500 text-sm mt-1">학습 관리 시스템</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

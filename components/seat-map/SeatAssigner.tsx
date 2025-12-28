@@ -43,12 +43,13 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        const interval = setInterval(fetchSeats, 5000); // Poll every 5 seconds for seats
+        fetchSeats(); // Initial fetch
+        const interval = setInterval(() => fetchSeats(true), 5000); // Poll every 5 seconds for seats (background)
         return () => clearInterval(interval);
     }, []);
 
-    const fetchSeats = async () => {
-        setLoading(true);
+    const fetchSeats = async (isBackground = false) => {
+        if (!isBackground) setLoading(true);
         try {
             const res = await fetch(`/api/teacher/rooms/${roomId}/status`);
             const data = await res.json();
@@ -56,7 +57,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
         } catch (e) {
             console.error("Failed to fetch seats", e);
         }
-        setLoading(false);
+        if (!isBackground) setLoading(false);
     };
 
     const handleSearch = async () => {
@@ -85,7 +86,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                     action: 'ASSIGN'
                 })
             });
-            await fetchSeats();
+            await fetchSeats(true);
             setSelectedSeat(null);
         } catch (e) {
             console.error("Assignment failed", e);
@@ -105,7 +106,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                     action: 'UNASSIGN'
                 })
             });
-            await fetchSeats();
+            await fetchSeats(true);
             setSelectedSeat(null);
         } catch (e) {
             console.error("Unassignment failed", e);
@@ -118,7 +119,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="flex justify-end">
-                <ExcelBulkAssign roomId={roomId} onUpdate={fetchSeats} />
+                <ExcelBulkAssign roomId={roomId} onUpdate={() => fetchSeats(true)} />
             </div>
             <div className="border bg-gray-50 relative overflow-auto h-[600px] rounded-lg shadow-inner p-4">
                 {seats.map(seat => (
