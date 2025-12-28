@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,32 +15,42 @@ export default function NoticeWritePage() {
     const [important, setImportant] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [attachments, setAttachments] = useState<string[]>([]);
+    const [uploading, setUploading] = useState(false);
     const router = useRouter();
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const files = Array.from(e.target.files);
+            setUploading(true);
 
             for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    toast.error(`${file.name}: 용량이 10MB를 초과하여 제외되었습니다.`);
+                    continue;
+                }
+
                 const formData = new FormData();
                 formData.append('file', file);
 
                 try {
                     const res = await fetch('/api/upload', {
                         method: 'POST',
-                        body: formData
+                        body: formData,
                     });
-                    if (res.ok) {
-                        const data = await res.json();
-                        setAttachments(prev => [...prev, data.path]);
-                    } else {
-                        toast.error(`${file.name} 업로드 실패`);
-                    }
+
+                    if (!res.ok) throw new Error('Upload failed');
+
+                    const data = await res.json();
+                    setAttachments(prev => [...prev, data.url]);
+                    toast.success(`${file.name} 업로드 완료`);
                 } catch (err) {
                     console.error(err);
-                    toast.error("파일 업로드 중 오류 발생");
+                    toast.error(`${file.name} 업로드 실패`);
                 }
             }
+            setUploading(false);
+            // Clear input
+            e.target.value = '';
         }
     };
 
@@ -94,16 +105,22 @@ export default function NoticeWritePage() {
                                 type="file"
                                 multiple
                                 onChange={handleFileChange}
+                                disabled={uploading}
                                 className="w-full max-w-sm"
                             />
                             <span className="text-xs text-gray-400">최대 10MB</span>
                         </div>
                     </div>
+                    {uploading && <div className="text-sm text-blue-500 pl-24">파일 업로드 중...</div>}
                     {attachments.length > 0 && (
                         <div className="pl-24 flex flex-col gap-2">
                             {attachments.map((file, idx) => (
                                 <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border text-sm">
-                                    <span className="truncate max-w-[300px]">{file.split('/').pop()}</span>
+                                    <span className="truncate max-w-[300px]">
+                                        <a href={file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                            {file.split('/').pop()}
+                                        </a>
+                                    </span>
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -140,7 +157,7 @@ export default function NoticeWritePage() {
 
                 <div className="flex justify-end gap-2 pt-4">
                     <Button variant="outline" onClick={() => router.back()} disabled={submitting}>취소</Button>
-                    <Button onClick={handleSubmit} disabled={submitting} className="bg-blue-600 hover:bg-blue-700">등록</Button>
+                    <Button onClick={handleSubmit} disabled={submitting || uploading} className="bg-blue-600 hover:bg-blue-700">등록</Button>
                 </div>
             </div>
         </div>

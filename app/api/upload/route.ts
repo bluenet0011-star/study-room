@@ -1,32 +1,46 @@
-import { NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
-import { writeFile } from 'fs/promises';
+import { NextRequest, NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { auth } from "@/lib/auth";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
+    const session = await auth();
+    if (!session || (session.user.role !== 'TEACHER' && session.user.role !== 'ADMIN')) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
-        const formData = await request.formData();
-        const file = formData.get('file') as File;
+        const formData = await req.formData();
+        const file = formData.get("file") as File;
 
         if (!file) {
-            return NextResponse.json({ Message: "No file received" }, { status: 400 });
+            return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = Date.now() + '_' + file.name.replaceAll(" ", "_");
 
-        // Ensure directory exists
-        const uploadDir = path.join(process.cwd(), 'public/uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        // Create date-based directory structure
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const relativeDir = `uploads/${year}/${month}`;
+        const uploadDir = path.join(process.cwd(), "public", relativeDir);
 
+        await mkdir(uploadDir, { recursive: true });
+
+        // Generate unique filename to prevent overwrite
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.name);
+        const filename = `${path.basename(file.name, ext)}-${uniqueSuffix}${ext}`;
         const filepath = path.join(uploadDir, filename);
+
         await writeFile(filepath, buffer);
 
-        return NextResponse.json({ Message: "Success", status: 201, path: `/uploads/${filename}` });
-    } catch (error) {
-        console.error("Upload Error:", error);
-        return NextResponse.json({ Message: "Failed", status: 500 }, { status: 500 });
+        const url = `/${relativeDir}/${filename}`;
+
+        return NextResponse.json({ url, filename: file.name });
+    } catch (e) {
+        console.error("Upload error:", e);
+        return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
 }
