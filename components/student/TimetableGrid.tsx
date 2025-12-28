@@ -81,16 +81,22 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
                             </div>
                             {weekdays.map((_, dIdx) => {
                                 const dayData = timetable[dIdx + 1]; // 1-based index (1=Mon)
-                                const subject = dayData ? dayData[period] : '';
+                                const rawSubject = dayData ? dayData[period] : '';
 
-                                // Comcigan often returns 'subject', or sometimes 'subject(teacher)'.
-                                // We'll just display what we get.
+                                let displaySubject = '';
+                                if (typeof rawSubject === 'string') {
+                                    displaySubject = rawSubject;
+                                } else if (typeof rawSubject === 'object' && rawSubject !== null) {
+                                    // Handle object case (comcigan-parser might return objects)
+                                    // Common structure: { grade, class, subject, teacher ... }
+                                    displaySubject = rawSubject.subject || '';
+                                }
 
                                 return (
                                     <div key={dIdx} className={`p-3 flex items-center justify-center min-h-[60px] ${currentDay === dIdx + 1 ? 'bg-blue-50/30' : ''}`}>
-                                        {subject ? (
-                                            <span className="font-medium text-gray-800 break-keep">
-                                                {subject}
+                                        {displaySubject ? (
+                                            <span className="font-medium text-gray-800 break-keep text-sm">
+                                                {displaySubject}
                                             </span>
                                         ) : (
                                             <span className="text-gray-300">-</span>
