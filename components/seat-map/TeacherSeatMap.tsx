@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { User, FileText, Clock, AlertCircle } from 'lucide-react';
+import { User, FileText, Clock, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -198,7 +198,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-green-50 hover:border-green-200">
                                         <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                            <CheckIcon />
+                                            <Check className="w-5 h-5" />
                                         </div>
                                         <span>확인됨</span>
                                     </Button>
