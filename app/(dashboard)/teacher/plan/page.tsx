@@ -50,7 +50,7 @@ export default function TeacherPlanPage() {
 
     return (
         <div className="p-6 space-y-6">
-            <h1 className="text-2xl font-bold">학습관리 (전체 이력)</h1>
+            <h1 className="text-2xl font-bold">퍼미션 관리 (전체 이력)</h1>
 
             <div className="flex gap-2 mb-4">
                 <div className="relative max-w-sm w-full">

@@ -109,7 +109,7 @@ export default function LoginPage() {
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2 text-center text-xs text-gray-500 bg-gray-50/50 py-4 rounded-b-lg border-t">
                     <p>비밀번호 분실 시 담당 교사에게 문의하세요.</p>
-                    <p className="opacity-70">© Dongtan Global High School. All rights reserved.</p>
+                    <p className="opacity-70">© DGHS. All rights reserved.</p>
                 </CardFooter>
             </Card>
         </div>

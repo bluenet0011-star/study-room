@@ -118,7 +118,7 @@ export default function ProxyApplyPage() {
     };
 
     return (
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-4 md:p-6 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-2">대리 퍼미션 신청</h1>
             <p className="text-gray-500 mb-6">학생을 대신하여 퍼미션을 등록하고 즉시 승인합니다.</p>
 

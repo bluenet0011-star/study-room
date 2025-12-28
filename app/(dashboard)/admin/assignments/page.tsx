@@ -19,7 +19,7 @@ export default function AssignmentRoomsPage() {
     }, []);
 
     return (
-        <div className="p-6">
+        <div className="p-4 md:p-6">
             <h1 className="text-3xl font-bold mb-6">학생 좌석 배정</h1>
             <p className="text-gray-600 mb-8">좌석을 배정할 자습실을 선택하세요.</p>
 

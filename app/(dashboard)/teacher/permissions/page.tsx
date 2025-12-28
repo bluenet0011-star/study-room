@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Check, X, Loader2, RefreshCw } from 'lucide-react';
 
 interface Permission {
     id: string;
@@ -16,7 +16,7 @@ interface Permission {
     status: string;
 }
 
-import { useSocket } from '@/components/providers/SocketProvider';
+
 
 // Helper maps
 const typeMap: Record<string, string> = {
@@ -35,10 +35,12 @@ const statusMap: Record<string, string> = {
 export default function PermissionInboxPage() {
     const [permissions, setPermissions] = useState<any[]>([]);
     const [loading, setLoading] = useState<string | null>(null);
-    const socket = useSocket();
+
 
     useEffect(() => {
         fetchPermissions();
+        const interval = setInterval(fetchPermissions, 10000); // Poll every 10 seconds
+        return () => clearInterval(interval);
     }, []);
 
     const fetchPermissions = () => {
@@ -56,15 +58,7 @@ export default function PermissionInboxPage() {
 
             if (res.ok) {
                 const updated = await res.json();
-                if (socket) {
-                    socket.emit('PERMISSION_UPDATE', {
-                        id: updated.id,
-                        status: updated.status,
-                        studentId: updated.studentId,
-                        teacherId: updated.teacherId,
-                        studentName: updated.student?.name
-                    });
-                }
+
                 fetchPermissions();
             }
         } catch (e) {
@@ -74,20 +68,26 @@ export default function PermissionInboxPage() {
     };
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">퍼미션 수신함</h1>
+        <div className="p-4 md:p-6">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">퍼미션 수신함</h1>
+                <Button variant="outline" size="sm" onClick={fetchPermissions}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    새로고침
+                </Button>
+            </div>
             <div className="grid gap-4">
                 {permissions.length === 0 && <p className="text-gray-500">대기 중인 요청이 없습니다.</p>}
                 {permissions.map(p => (
                     <Card key={p.id} className={p.status === 'PENDING' ? 'border-blue-200 bg-blue-50/20' : ''}>
-                        <CardContent className="flex items-center justify-between p-6">
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2">
+                        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 md:p-6 gap-4">
+                            <div className="space-y-1 w-full">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-bold text-lg">{p.student.name}</span>
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-gray-500 whitespace-nowrap">
                                         {p.student.grade}-{p.student.class}-{p.student.number}
                                     </span>
-                                    <Badge variant="outline">{typeMap[p.type] || p.type}</Badge>
+                                    <Badge variant="outline" className="whitespace-nowrap">{typeMap[p.type] || p.type}</Badge>
                                 </div>
                                 <div className="text-sm text-gray-700 font-medium">
                                     {p.location && <span className="mr-2 text-blue-600">[{p.location}]</span>}
@@ -98,21 +98,32 @@ export default function PermissionInboxPage() {
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                                 {p.status === 'PENDING' ? (
                                     <>
-                                        <Button size="sm" onClick={() => handleAction(p.id, 'APPROVED')} disabled={!!loading} className="bg-green-600 hover:bg-green-700">
+                                        <Button size="sm" onClick={() => handleAction(p.id, 'APPROVED')} disabled={!!loading} className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none">
                                             {loading === p.id ? <Loader2 className="animate-spin w-4 h-4" /> : <Check className="w-4 h-4" />}
                                             승인
                                         </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleAction(p.id, 'REJECTED')} disabled={!!loading}>
+                                        <Button size="sm" variant="destructive" onClick={() => handleAction(p.id, 'REJECTED')} disabled={!!loading} className="flex-1 sm:flex-none">
                                             <X className="w-4 h-4" /> 반려
                                         </Button>
                                     </>
                                 ) : (
-                                    <Badge variant={p.status === 'APPROVED' ? 'default' : 'destructive'}>
-                                        {statusMap[p.status] || p.status}
-                                    </Badge>
+                                    <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                                        <Badge variant={p.status === 'APPROVED' ? 'default' : 'destructive'}>
+                                            {statusMap[p.status] || p.status}
+                                        </Badge>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleAction(p.id, 'PENDING')}
+                                            disabled={!!loading}
+                                            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                        >
+                                            실행취소
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>

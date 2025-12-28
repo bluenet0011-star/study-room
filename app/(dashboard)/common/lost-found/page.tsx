@@ -44,24 +44,29 @@ export default function LostFoundPage() {
     }, []);
 
     const handleUpload = async () => {
-        if (!file || !title || !content) {
-            toast.error("모든 정보를 입력해주세요.");
+        if (!title || !content) {
+            toast.error("제목과 내용을 입력해주세요.");
             return;
         }
 
         setLoading(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            let imagePath = '';
 
-            // 1. Upload File
-            const uploadRes = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            });
-            const uploadData = await uploadRes.json();
+            // 1. Upload File (if exists)
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            if (!uploadRes.ok) throw new Error(uploadData.Message);
+                const uploadRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+
+                if (!uploadRes.ok) throw new Error(uploadData.Message);
+                imagePath = uploadData.path;
+            }
 
             // 2. Create DB Entry
             const res = await fetch('/api/common/lost-found', {
@@ -71,7 +76,7 @@ export default function LostFoundPage() {
                     title,
                     content,
                     location,
-                    imagePath: uploadData.path,
+                    imagePath: imagePath, // Can be empty string
                     authorName: session?.user?.name
                 })
             });
@@ -85,7 +90,8 @@ export default function LostFoundPage() {
             // refresh
             // fetchItems();
         } catch (e) {
-            toast.error("업로드 실패");
+            console.error(e);
+            toast.error("등록에 실패했습니다.");
         } finally {
             setLoading(false);
         }

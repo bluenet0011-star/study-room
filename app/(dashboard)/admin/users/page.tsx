@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ExcelImport } from '@/components/admin/ExcelImport';
 import ExcelExport from "@/components/admin/ExcelExport";
 import ExcelTemplate from "@/components/admin/ExcelTemplate";
+import { Button } from "@/components/ui/button";
+import { Database } from "lucide-react";
 
 interface UserData {
     id: string;
@@ -59,6 +61,10 @@ export default function AdminUsersPage() {
                     <p className="text-muted-foreground mt-1">학생 및 교직원 계정을 관리합니다.</p>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <Button variant="outline" onClick={() => window.open('/api/admin/export', '_blank')}>
+                        <Database className="w-4 h-4 mr-2" />
+                        전체 DB 백업
+                    </Button>
                     <ExcelTemplate />
                     <ExcelExport data={filteredUsers} />
                     <ExcelImport />

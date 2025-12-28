@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch'; // Ensure you have this component or use standard checkbox
-import { Loader2, Calendar } from 'lucide-react';
+import { Loader2, Calendar, ChevronsUpDown, Check } from 'lucide-react';
 import { useSocket } from '@/components/providers/SocketProvider';
 import { useSession } from 'next-auth/react';
 import { Checkbox } from '@/components/ui/checkbox'; // Fallback if switch unavailable
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface Teacher {
     id: string;
@@ -27,6 +29,7 @@ export default function StudyPlanPage() {
     const socket = useSocket();
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isTeacherOpen, setIsTeacherOpen] = useState(false);
     const [formData, setFormData] = useState({
         type: 'MOVEMENT',
         teacherId: '',
@@ -91,15 +94,15 @@ export default function StudyPlanPage() {
     return (
         <div className="p-6 max-w-2xl mx-auto space-y-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">학습계획 / 이동 신청</h1>
-                <p className="text-muted-foreground mt-1">자습 시간 중 이동이나 학습 계획을 신청합니다.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">퍼미션 신청 / 이동 신청</h1>
+                <p className="text-muted-foreground mt-1">자습 시간 중 이동이나 퍼미션을 신청합니다.</p>
             </div>
 
             <Card className="border-t-4 border-t-blue-500 shadow-md">
                 <CardHeader className="bg-gray-50/50 pb-4">
                     <CardTitle className="text-xl flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-blue-600" />
-                        신청서 작성
+                        퍼미션 신청서 작성
                     </CardTitle>
                     <CardDescription>
                         교내 이동, 외출, 조퇴 등 필요한 퍼미션을 신청하세요.
@@ -164,16 +167,49 @@ export default function StudyPlanPage() {
 
                         <div className="space-y-2">
                             <Label>담당 선생님</Label>
-                            <Select onValueChange={val => setFormData({ ...formData, teacherId: val })}>
-                                <SelectTrigger className="bg-yellow-50/50 border-yellow-200">
-                                    <SelectValue placeholder="선생님을 선택해주세요 (필수)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teachers.map(t => (
-                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Popover open={isTeacherOpen} onOpenChange={setIsTeacherOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={isTeacherOpen}
+                                        className="w-full justify-between bg-yellow-50/50 border-yellow-200"
+                                    >
+                                        {formData.teacherId
+                                            ? teachers.find((t) => t.id === formData.teacherId)?.name
+                                            : "선생님을 검색하세요 (필수)"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="선생님 이름 검색..." />
+                                        <CommandList>
+                                            <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
+                                            <CommandGroup>
+                                                {teachers.map((t) => (
+                                                    <CommandItem
+                                                        key={t.id}
+                                                        value={t.name}
+                                                        onSelect={() => {
+                                                            setFormData({ ...formData, teacherId: t.id });
+                                                            setIsTeacherOpen(false);
+                                                        }}
+                                                    >
+                                                        <Check
+                                                            className={cn(
+                                                                "mr-2 h-4 w-4",
+                                                                formData.teacherId === t.id ? "opacity-100" : "opacity-0"
+                                                            )}
+                                                        />
+                                                        {t.name}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
 
                         <div className="space-y-2">

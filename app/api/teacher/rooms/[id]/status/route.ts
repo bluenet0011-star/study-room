@@ -21,9 +21,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     // 2. Get Active Permissions for students in this room
-    // Simple approach: Get all active permissions intersecting now
+    // Optimization: Only fetch permissions for students currently assigned to seats in this room
+    const assignedStudentIds = seats.flatMap(s => s.assignments.map((a: any) => a.student.id));
+
     const activePermissions = await prisma.permission.findMany({
         where: {
+            studentId: { in: assignedStudentIds },
             status: 'APPROVED',
             start: { lte: now },
             end: { gte: now }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NextAuthProvider from "@/components/providers/NextAuthProvider";
-import SocketProvider from "@/components/providers/SocketProvider";
+
 import NotificationProvider from "@/components/providers/NotificationProvider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -32,12 +32,10 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
         <NextAuthProvider>
-          <SocketProvider>
-            <NotificationProvider>
-              {children}
-              <Toaster position="top-right" />
-            </NotificationProvider>
-          </SocketProvider>
+          <NotificationProvider>
+            {children}
+            <Toaster position="top-right" />
+          </NotificationProvider>
         </NextAuthProvider>
       </body>
     </html>

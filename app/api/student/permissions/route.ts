@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+
 const permissionSchema = z.object({
     start: z.string(),
     end: z.string(),
@@ -57,8 +58,11 @@ export async function POST(req: Request) {
                 reason: data.reason,
                 location: data.location,
                 status: "PENDING"
-            }
+            },
+            include: { student: { select: { name: true } } }
         });
+
+
 
         return NextResponse.json(permission);
 

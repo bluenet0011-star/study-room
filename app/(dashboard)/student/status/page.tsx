@@ -36,9 +36,14 @@ export default function StatusPage() {
     const [permissions, setPermissions] = useState<Permission[]>([]);
 
     useEffect(() => {
-        fetch('/api/student/permissions').then(res => res.json()).then(setPermissions);
-        // Setup socket listener here later
+        fetchPermissions();
+        const interval = setInterval(fetchPermissions, 10000); // Poll every 10 seconds
+        return () => clearInterval(interval);
     }, []);
+
+    const fetchPermissions = () => {
+        fetch('/api/student/permissions').then(res => res.json()).then(setPermissions);
+    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -49,7 +54,7 @@ export default function StatusPage() {
     };
 
     return (
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-4 md:p-6 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">내 신청 현황</h1>
             <div className="space-y-4">
                 <div className="border rounded-lg bg-white shadow-sm overflow-hidden">

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { io } from "socket.io-client";
+
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await auth();
@@ -21,10 +21,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     // Create Notification
-    if (status === 'APPROVED' || status === 'REJECTED') {
-        const title = status === 'APPROVED' ? '퍼미션 승인' : '퍼미션 반려';
-        const message = `[${permission.type}] 신청이 ${status === 'APPROVED' ? '승인' : '반려'}되었습니다.`;
+    let title = "";
+    let message = "";
 
+    if (status === 'APPROVED') {
+        title = '퍼미션 승인';
+        message = `[${permission.type}] 신청이 승인되었습니다.`;
+    } else if (status === 'REJECTED') {
+        title = '퍼미션 반려';
+        message = `[${permission.type}] 신청이 반려되었습니다.`;
+    } else if (status === 'PENDING') {
+        title = '퍼미션 상태 변경';
+        message = `[${permission.type}] 신청 상태가 대기중으로 변경되었습니다.`;
+    }
+
+    if (title) {
         await prisma.notification.create({
             data: {
                 userId: permission.studentId,
@@ -34,13 +45,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         });
     }
 
-    // Notify via Socket
-    const socket = io("http://localhost:3000"); // Internal connection
-    socket.emit("PERMISSION_UPDATE", {
-        permissionId: permission.id,
-        studentId: permission.studentId,
-        status
-    });
+
 
     return NextResponse.json(permission);
 }

@@ -54,7 +54,7 @@ export default function EmptyPeriodPage() {
     };
 
     return (
-        <div className="p-6 max-w-6xl mx-auto flex flex-col md:flex-row gap-6">
+        <div className="p-4 md:p-6 max-w-6xl mx-auto flex flex-col md:flex-row gap-6">
             <div className="flex-1">
                 <h1 className="text-2xl font-bold mb-4">공강 관리</h1>
                 <p className="text-gray-500 mb-6">공강 시간 활동 계획을 등록하세요.</p>
