@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, UserPlus, UserMinus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSocket } from '@/components/providers/SocketProvider';
+
 import { ExcelBulkAssign } from './ExcelBulkAssign';
 
 interface Seat {
@@ -42,19 +42,10 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
     const [isSearching, setIsSearching] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const socket = useSocket();
-
     useEffect(() => {
-        fetchSeats();
-    }, [roomId]);
-
-    useEffect(() => {
-        if (!socket) return;
-        socket.on('SEAT_UPDATE', () => fetchSeats());
-        return () => {
-            socket.off('SEAT_UPDATE');
-        };
-    }, [socket]);
+        const interval = setInterval(fetchSeats, 5000); // Poll every 5 seconds for seats
+        return () => clearInterval(interval);
+    }, []);
 
     const fetchSeats = async () => {
         setLoading(true);

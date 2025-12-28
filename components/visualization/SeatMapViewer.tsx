@@ -1,25 +1,16 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSocket } from '@/components/providers/SocketProvider';
+
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function SeatMapViewer({ roomId }: { roomId: string }) {
     const [seats, setSeats] = useState<any[]>([]);
-    const socket = useSocket();
-
     useEffect(() => {
         fetchData();
-        if (!socket) return;
-
-        socket.on('PERMISSION_UPDATE', () => fetchData());
-        socket.on('SEAT_UPDATE', () => fetchData());
-
-        return () => {
-            socket.off('PERMISSION_UPDATE');
-            socket.off('SEAT_UPDATE');
-        };
-    }, [roomId, socket]);
+        const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
+        return () => clearInterval(interval);
+    }, [roomId]);
 
     const fetchData = () => {
         fetch(`/api/teacher/rooms/${roomId}/status`)

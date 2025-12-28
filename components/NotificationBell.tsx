@@ -5,7 +5,7 @@ import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSocket } from './providers/SocketProvider';
+
 import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -22,23 +22,11 @@ export function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [open, setOpen] = useState(false);
     const { data: session } = useSession();
-    const socket = useSocket();
 
     useEffect(() => {
         if (!session?.user?.id) return;
         fetchNotifications();
-
-        if (socket) {
-            socket.on(`NOTIFICATION_${session.user.id}`, (newNoti: Notification) => {
-                setNotifications(prev => [newNoti, ...prev]);
-                setUnreadCount(prev => prev + 1);
-            });
-        }
-
-        return () => {
-            if (socket) socket.off(`NOTIFICATION_${session.user.id}`);
-        };
-    }, [session, socket]);
+    }, [session]);
 
     const fetchNotifications = async () => {
         const res = await fetch('/api/notifications');
