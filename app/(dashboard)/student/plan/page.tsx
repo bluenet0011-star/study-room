@@ -87,7 +87,7 @@ export default function StudyPlanPage() {
     };
 
     return (
-        <div className="p-6 max-w-2xl mx-auto space-y-6">
+        <div className="p-6 w-full max-w-2xl mx-auto space-y-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">퍼미션 신청 / 이동 신청</h1>
                 <p className="text-muted-foreground mt-1">자습 시간 중 이동이나 퍼미션을 신청합니다.</p>

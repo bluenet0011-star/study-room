@@ -48,12 +48,12 @@ export default function LoginPage() {
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-gray-100 p-4">
             <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary animate-in fade-in zoom-in duration-500">
                 <CardHeader className="space-y-4 flex flex-col items-center pb-2">
-                    <div className="w-24 h-24 relative mb-2 transition-transform hover:scale-105 duration-300">
+                    <div className="w-24 h-24 relative mb-2 transition-transform hover:scale-105 duration-300 bg-white rounded-full shadow-sm p-4">
                         <Image
                             src="/school-logo.png"
                             alt="Dongtan Global High School Logo"
                             fill
-                            className="object-contain"
+                            className="object-contain p-2"
                             priority
                         />
                     </div>

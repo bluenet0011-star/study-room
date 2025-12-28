@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import path from 'path';
-import { writeFile } from 'fs/promises';
 import fs from 'fs';
-
-
+import { writeFile } from 'fs/promises';
 
 export async function POST(request: Request) {
     try {
@@ -11,30 +9,24 @@ export async function POST(request: Request) {
         const file = formData.get('file') as File;
 
         if (!file) {
-            return NextResponse.json({ error: "No file received." }, { status: 400 });
+            return NextResponse.json({ Message: "No file received" }, { status: 400 });
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = Date.now() + "_" + file.name.replaceAll(" ", "_");
+        const filename = Date.now() + '_' + file.name.replaceAll(" ", "_");
 
-        // Ensure upload dir exists
-        const uploadDir = path.join(process.cwd(), "public/uploads");
+        // Ensure directory exists
+        const uploadDir = path.join(process.cwd(), 'public/uploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
 
-        await writeFile(
-            path.join(uploadDir, filename),
-            buffer
-        );
+        const filepath = path.join(uploadDir, filename);
+        await writeFile(filepath, buffer);
 
-        return NextResponse.json({
-            Message: "Success",
-            status: 201,
-            path: `/uploads/${filename}`
-        });
+        return NextResponse.json({ Message: "Success", status: 201, path: `/uploads/${filename}` });
     } catch (error) {
-        console.log("Error occurred ", error);
-        return NextResponse.json({ Message: "Failed", status: 500 });
+        console.error("Upload Error:", error);
+        return NextResponse.json({ Message: "Failed", status: 500 }, { status: 500 });
     }
 }

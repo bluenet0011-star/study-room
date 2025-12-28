@@ -54,7 +54,7 @@ export default function StatusPage() {
     };
 
     return (
-        <div className="p-4 md:p-6 max-w-2xl mx-auto">
+        <div className="p-4 md:p-6 w-full max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">내 신청 현황</h1>
             <div className="space-y-4">
                 <div className="border rounded-lg bg-white shadow-sm overflow-hidden">

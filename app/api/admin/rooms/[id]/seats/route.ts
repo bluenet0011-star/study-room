@@ -56,13 +56,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                         roomId: resolvedParams.id,
                         label: seat.label,
                         x: seat.x,
-                        y: seat.y
+                        y: seat.y,
+                        type: seat.type || "SEAT",
+                        rotation: seat.rotation || 0
                     }
                 });
             } else {
                 await tx.seat.update({
                     where: { id: seat.id },
-                    data: { x: seat.x, y: seat.y, label: seat.label }
+                    data: {
+                        x: seat.x,
+                        y: seat.y,
+                        label: seat.label,
+                        type: seat.type,
+                        rotation: seat.rotation
+                    }
                 });
             }
         }

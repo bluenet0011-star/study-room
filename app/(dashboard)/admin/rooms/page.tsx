@@ -83,6 +83,11 @@ export default function RoomsPage() {
                                     </div>
 
                                     <div className="flex gap-2 mt-4 pt-3 border-t">
+                                        <Link href={`/admin/assignments/${room.id}`} className="flex-1">
+                                            <Button size="sm" className="w-full">
+                                                학생 배정
+                                            </Button>
+                                        </Link>
                                         <Link href={`/admin/rooms/${room.id}`} className="flex-1">
                                             <Button variant="outline" size="sm" className="w-full">
                                                 좌석 배치
@@ -124,6 +129,9 @@ export default function RoomsPage() {
                                     <TableCell>{room.seats?.length || 0}</TableCell>
                                     <TableCell>
                                         <div className="flex gap-2">
+                                            <Link href={`/admin/assignments/${room.id}`}>
+                                                <Button size="sm">학생 배정</Button>
+                                            </Link>
                                             <Link href={`/admin/rooms/${room.id}`}>
                                                 <Button variant="outline" size="sm">좌석 배치 편집</Button>
                                             </Link>

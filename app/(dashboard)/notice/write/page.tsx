@@ -13,7 +13,35 @@ export default function NoticeWritePage() {
     const [content, setContent] = useState('');
     const [important, setImportant] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [attachments, setAttachments] = useState<string[]>([]);
     const router = useRouter();
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const files = Array.from(e.target.files);
+
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setAttachments(prev => [...prev, data.path]);
+                    } else {
+                        toast.error(`${file.name} 업로드 실패`);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    toast.error("파일 업로드 중 오류 발생");
+                }
+            }
+        }
+    };
 
     const handleSubmit = async () => {
         if (!title.trim() || !content.trim()) {
@@ -26,7 +54,7 @@ export default function NoticeWritePage() {
             const res = await fetch('/api/notices', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, important })
+                body: JSON.stringify({ title, content, important, attachments })
             });
 
             if (res.ok) {
@@ -58,14 +86,37 @@ export default function NoticeWritePage() {
                     />
                 </div>
 
-                <div className="flex items-center gap-4 border p-4 rounded-lg bg-gray-50">
-                    <Label className="w-20">첨부파일</Label>
-                    <div className="flex-1 flex items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => toast.info('파일 업로드 기능은 준비 중입니다. (S3 연동 필요)')}>
-                            파일 선택
-                        </Button>
-                        <span className="text-xs text-gray-400">지원 형식: jpg, png, pdf, hwp (최대 10MB)</span>
+                <div className="flex flex-col gap-4 border p-4 rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-4">
+                        <Label className="w-20">첨부파일</Label>
+                        <div className="flex-1 flex items-center gap-2">
+                            <Input
+                                type="file"
+                                multiple
+                                onChange={handleFileChange}
+                                className="w-full max-w-sm"
+                            />
+                            <span className="text-xs text-gray-400">최대 10MB</span>
+                        </div>
                     </div>
+                    {attachments.length > 0 && (
+                        <div className="pl-24 flex flex-col gap-2">
+                            {attachments.map((file, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                                    <span className="truncate max-w-[300px]">{file.split('/').pop()}</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0 text-red-500"
+                                        onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                                    >
+                                        ✕
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center space-x-2">

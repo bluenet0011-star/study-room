@@ -12,6 +12,7 @@ interface Notice {
     title: string;
     content: string;
     author: { name: string };
+    attachments: string[];
     createdAt: string;
 }
 
@@ -67,9 +68,35 @@ export default function NoticeDetailPage({ params }: { params: { id: string } })
                         )}
                     </div>
                 </div>
-                <div className="p-8 whitespace-pre-wrap text-gray-700 leading-relaxed text-base">
+                <div className="p-8 whitespace-pre-wrap text-gray-700 leading-relaxed text-base min-h-[300px]">
                     {notice.content}
                 </div>
+
+                {notice.attachments && notice.attachments.length > 0 && (
+                    <div className="border-t bg-gray-50/50 p-6">
+                        <h3 className="text-sm font-medium text-gray-500 mb-3">첨부파일</h3>
+                        <div className="flex flex-col gap-2">
+                            {notice.attachments.map((file, idx) => (
+                                <a
+                                    key={idx}
+                                    href={file}
+                                    download
+                                    className="flex items-center gap-3 p-3 bg-white border rounded hover:bg-gray-50 transition-colors group"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <div className="bg-blue-50 p-2 rounded text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                    </div>
+                                    <span className="text-sm text-gray-700 group-hover:text-blue-700 font-medium">
+                                        {file.split('/').pop()}
+                                    </span>
+                                    <span className="text-xs text-gray-400 ml-auto">다운로드</span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
