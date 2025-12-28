@@ -126,8 +126,8 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                     <div
                         key={seat.id}
                         className={`absolute w-12 h-12 flex flex-col items-center justify-center rounded-md border text-[10px] cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm
-                            ${seat.status === 'MOVEMENT' ? 'bg-yellow-100 border-yellow-400 text-yellow-800' :
-                                seat.status === 'OUTING' ? 'bg-orange-100 border-orange-400 text-orange-800' :
+                            ${seat.status === 'MOVEMENT' ? 'bg-red-100 border-red-400 text-red-800' :
+                                seat.status === 'OUTING' ? 'bg-red-100 border-red-400 text-red-800' :
                                     seat.student ? 'bg-blue-100 border-blue-400 text-blue-800' : 'bg-white border-gray-300'}
                         `}
                         style={{ left: (seat.x || 0) * 60, top: (seat.y || 0) * 60 }}

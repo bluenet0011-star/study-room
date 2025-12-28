@@ -37,11 +37,12 @@ export const NAV_LINKS = [
         description: "자습실 현황을 모니터링하고 관리합니다."
     },
     {
-        name: "학습 관리", // Renamed from "퍼미션 관리" to match DashboardContent and be more descriptive
+    {
+        name: "퍼미션 관리", // Renamed back to "퍼미션 관리" by user request
         href: "/teacher/plan",
         icon: CalendarCheck,
         roles: ["TEACHER"],
-        description: "학생들의 학습 계획을 확인하고 피드백합니다."
+        description: "학생들의 퍼미션 신청을 확인하고 관리합니다."
     },
     {
         name: "리포트",
@@ -72,11 +73,11 @@ export const NAV_LINKS = [
         description: "담당 학생들의 정보를 조회하고 관리합니다."
     },
     {
-        name: "학습 계획 관리", // Renamed from "퍼미션 신청" to be more formal
+        name: "퍼미션 신청", // Renamed back to "퍼미션 신청" for consistency
         href: "/student/plan",
         icon: CalendarCheck,
         roles: ["STUDENT"],
-        description: "나의 주간/월간 학습 계획을 작성하고 관리합니다."
+        description: "나의 주간/월간 퍼미션을 신청하고 관리합니다."
     },
     {
         name: "내 신청 현황",

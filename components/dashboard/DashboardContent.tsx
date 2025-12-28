@@ -21,9 +21,9 @@ export default async function DashboardContent() {
 
     const role = session.user.role;
 
-    // Filter links based on role, and exclude the 'Dashboard' (home) link itself from the grid
+    // Filter links based on role (User requested exact match with Sidebar, so we include everything)
     const filteredLinks = NAV_LINKS.filter((link) =>
-        link.roles.includes(role) && link.href !== '/'
+        link.roles.includes(role)
     );
 
     const roleNames: Record<string, string> = {

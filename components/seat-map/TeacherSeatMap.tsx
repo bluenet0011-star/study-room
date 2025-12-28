@@ -15,33 +15,65 @@ interface Seat {
     label: string;
     x: number;
     y: number;
-    assignments: {
-        student: { id: string; name: string; grade: number; class: number; number: number };
+    status: string; // MOVEMENT, OUTING, OCCUPIED, EMPTY
+    student?: {
         id: string;
-    }[];
+        name: string;
+        grade: number;
+        class: number;
+        number: number;
+    };
+    assignments: any[];
 }
 
 interface TeacherSeatMapProps {
     roomId: string;
 }
 
+const typeMap: Record<string, string> = {
+    MOVEMENT: '이동',
+    OUTING: '외출',
+    EARLY_LEAVE: '조퇴',
+    OTHER: '기타'
+};
+
+const statusMap: Record<string, string> = {
+    PENDING: '대기중',
+    APPROVED: '승인됨',
+    REJECTED: '반려됨'
+};
+
 const SeatComponent = memo(({ seat, onClick, guidanceMode }: { seat: Seat, onClick: (s: Seat) => void, guidanceMode: boolean }) => {
-    const isAssigned = seat.assignments.length > 0;
+    const isAssigned = !!seat.student;
+
+    // Determine seat color based on status
+    let seatColorClass = "bg-white border-gray-200 text-gray-400 hover:border-blue-400";
+    if (isAssigned) {
+        if (seat.status === 'MOVEMENT' || seat.status === 'OUTING') {
+            seatColorClass = "bg-red-100 border-red-400 text-red-800 font-medium";
+        } else {
+            seatColorClass = "bg-blue-50 border-blue-200 text-blue-900 font-medium";
+        }
+    }
+
     return (
         <div
             onClick={() => onClick(seat)}
             className={cn(
                 "absolute w-16 h-12 rounded-lg border text-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm z-10",
-                isAssigned
-                    ? "bg-blue-50 border-blue-200 text-blue-900 font-medium"
-                    : "bg-white border-gray-200 text-gray-400 hover:border-blue-400",
+                seatColorClass,
                 guidanceMode && isAssigned && "ring-2 ring-red-400 ring-offset-1"
             )}
             style={{ left: seat.x * 60, top: seat.y * 60 }}
         >
             <span className="text-[10px] opacity-70 mb-0.5">{seat.label}</span>
             {isAssigned ? (
-                <span className="truncate w-full text-center px-1 font-bold">{seat.assignments[0].student.name}</span>
+                <span className="truncate w-full text-center px-1 font-bold">
+                    {seat.student?.name}
+                    {(seat.status === 'MOVEMENT' || seat.status === 'OUTING') && (
+                        <span className="block text-[8px] font-normal">{typeMap[seat.status] || seat.status}</span>
+                    )}
+                </span>
             ) : (
                 <span className="text-[10px]">-</span>
             )}
@@ -49,7 +81,8 @@ const SeatComponent = memo(({ seat, onClick, guidanceMode }: { seat: Seat, onCli
     );
 }, (prev, next) => {
     return prev.seat.id === next.seat.id &&
-        prev.seat.assignments === next.seat.assignments &&
+        prev.seat.status === next.seat.status &&
+        prev.seat.student?.id === next.seat.student?.id &&
         prev.guidanceMode === next.guidanceMode &&
         prev.seat.x === next.seat.x &&
         prev.seat.y === next.seat.y;
@@ -65,32 +98,33 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     const [permissions, setPermissions] = useState<any[]>([]); // Student permissions
     const [loadingPerms, setLoadingPerms] = useState(false);
 
-    const fetchSeats = useCallback(async () => {
+    const fetchSeats = useCallback(async (isBackground = false) => {
+        if (!isBackground) setIsLoading(true);
         try {
-            const res = await fetch(`/api/admin/rooms/${roomId}/seats`, { cache: 'no-store' });
+            const res = await fetch(`/api/teacher/rooms/${roomId}/status`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setSeats(data);
             }
         } catch (error) {
-            toast.error("좌석 정보를 불러오는데 실패했습니다.");
+            console.error("Failed to fetch seats", error);
         } finally {
-            setIsLoading(false);
+            if (!isBackground) setIsLoading(false);
         }
     }, [roomId]);
 
     useEffect(() => {
         fetchSeats();
-        const interval = setInterval(fetchSeats, 30000); // Poll every 30s
+        const interval = setInterval(() => fetchSeats(true), 5000); // Poll every 5s
         return () => clearInterval(interval);
     }, [fetchSeats]);
 
     const handleSeatClick = useCallback(async (seat: Seat) => {
         setSelectedSeat(seat);
-        if (seat.assignments.length > 0) {
+        if (seat.student) {
             setLoadingPerms(true);
             try {
-                const studentId = seat.assignments[0].student.id;
+                const studentId = seat.student.id;
                 const res = await fetch(`/api/student/permissions?studentId=${studentId}`);
                 if (res.ok) setPermissions(await res.json());
             } catch (e) {
@@ -103,18 +137,16 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
         }
     }, []);
 
-    const student = selectedSeat?.assignments?.[0]?.student;
-
-    // ... (rest of the code)
+    const student = selectedSeat?.student;
 
     return (
         <div className="space-y-4">
-            {/* ... header ... */}
             <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
                 <div className="flex items-center gap-4">
                     <h2 className="font-semibold text-lg">좌석 현황</h2>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                         <span className="flex items-center"><div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded mr-1"></div> 배정됨</span>
+                        <span className="flex items-center"><div className="w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></div> 부재중</span>
                         <span className="flex items-center"><div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded mr-1"></div> 빈좌석</span>
                     </div>
                 </div>
@@ -206,13 +238,13 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                                             <div key={perm.id} className="p-3 border rounded-lg text-sm bg-white">
                                                 <div className="flex justify-between mb-1">
                                                     <Badge variant={perm.status === 'APPROVED' ? 'default' : 'secondary'}>
-                                                        {perm.status}
+                                                        {statusMap[perm.status] || perm.status}
                                                     </Badge>
                                                     <span className="text-gray-500 text-xs">
                                                         {format(new Date(perm.createdAt), 'MM/dd HH:mm')}
                                                     </span>
                                                 </div>
-                                                <p className="font-medium text-gray-900">{perm.type} - {perm.location}</p>
+                                                <p className="font-medium text-gray-900">{typeMap[perm.type] || perm.type} - {perm.location}</p>
                                                 <p className="text-gray-500 mt-1">{perm.reason}</p>
                                                 <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
                                                     {format(new Date(perm.start), 'HH:mm')} ~ {format(new Date(perm.end), 'HH:mm')}
@@ -234,10 +266,4 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
             </Dialog>
         </div>
     );
-}
-
-function CheckIcon() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-    )
 }
