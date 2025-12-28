@@ -59,16 +59,23 @@ SeatComponent.displayName = 'SeatComponent';
 
 export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     const [seats, setSeats] = useState<Seat[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
     const [guidanceMode, setGuidanceMode] = useState(false);
     const [permissions, setPermissions] = useState<any[]>([]); // Student permissions
     const [loadingPerms, setLoadingPerms] = useState(false);
 
     const fetchSeats = useCallback(async () => {
-        const res = await fetch(`/api/admin/rooms/${roomId}/seats`, { cache: 'no-store' });
-        if (res.ok) {
-            const data = await res.json();
-            setSeats(data);
+        try {
+            const res = await fetch(`/api/admin/rooms/${roomId}/seats`, { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                setSeats(data);
+            }
+        } catch (error) {
+            toast.error("좌석 정보를 불러오는데 실패했습니다.");
+        } finally {
+            setIsLoading(false);
         }
     }, [roomId]);
 
@@ -98,8 +105,11 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
 
     const student = selectedSeat?.assignments?.[0]?.student;
 
+    // ... (rest of the code)
+
     return (
         <div className="space-y-4">
+            {/* ... header ... */}
             <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
                 <div className="flex items-center gap-4">
                     <h2 className="font-semibold text-lg">좌석 현황</h2>
@@ -119,14 +129,23 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
             </div>
 
             <div className="relative border bg-white rounded-xl shadow-sm overflow-hidden h-[600px] w-full overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
-                {seats.map((seat) => (
-                    <SeatComponent
-                        key={seat.id}
-                        seat={seat}
-                        onClick={handleSeatClick}
-                        guidanceMode={guidanceMode}
-                    />
-                ))}
+                {isLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <p className="text-sm text-gray-500">좌석 정보를 불러오는 중...</p>
+                        </div>
+                    </div>
+                ) : (
+                    seats.map((seat) => (
+                        <SeatComponent
+                            key={seat.id}
+                            seat={seat}
+                            onClick={handleSeatClick}
+                            guidanceMode={guidanceMode}
+                        />
+                    ))
+                )}
             </div>
 
             <Dialog open={!!selectedSeat} onOpenChange={(o) => !o && setSelectedSeat(null)}>

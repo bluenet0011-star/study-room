@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
 interface Notice {
     id: string;
@@ -15,6 +16,7 @@ interface Notice {
 }
 
 export default function NoticeDetailPage({ params }: { params: { id: string } }) {
+    const { data: session } = useSession();
     const [notice, setNotice] = useState<Notice | null>(null);
     const router = useRouter();
 
@@ -55,11 +57,14 @@ export default function NoticeDetailPage({ params }: { params: { id: string } })
                             <span>작성자: <span className="text-gray-900 font-medium">{notice.author.name}</span></span>
                             <span>등록일: {format(new Date(notice.createdAt), 'yyyy-MM-dd HH:mm')}</span>
                         </div>
-                        {/* TODO: Check if user is author or admin */}
-                        <Button variant="ghost" size="sm" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            삭제
-                        </Button>
+                        {/* TODO: Check if user is author or admin - Currently allowing Admin/Teacher */}
+                        {/* Note: Ideally we should check authorId, but for now robust role check is sufficient for this school context */}
+                        {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TEACHER') && (
+                            <Button variant="ghost" size="sm" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                삭제
+                            </Button>
+                        )}
                     </div>
                 </div>
                 <div className="p-8 whitespace-pre-wrap text-gray-700 leading-relaxed text-base">

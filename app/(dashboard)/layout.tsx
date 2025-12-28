@@ -13,13 +13,13 @@ export default async function DashboardLayout({
     if (!session?.user) redirect("/login");
 
     return (
-        <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
+        <div className="grid min-h-[100dvh] w-full lg:grid-cols-[280px_1fr]">
             {/* Desktop Sidebar */}
             <div className="hidden border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
                 <SideNav role={session.user.role} />
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col pb-[env(safe-area-inset-bottom)]">
                 {/* Mobile Navigation */}
                 <MobileNav role={session.user.role} />
 

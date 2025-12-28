@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, useSensor, useSensors, PointerSensor, TouchSensor, DragEndEvent } from '@dnd-kit/core';
 import { createSnapModifier } from '@dnd-kit/modifiers';
 import { Button } from '@/components/ui/button';
 import { DraggableSeat } from './DraggableSeat';
@@ -21,6 +21,9 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: { distance: 5 }
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: { delay: 250, tolerance: 5 }
         })
     );
 

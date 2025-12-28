@@ -43,8 +43,8 @@ export default function NoticePage() {
         <div className="p-4 md:p-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">공지사항</h1>
-                <div className="flex gap-2">
-                    <div className="relative w-64">
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                    <div className="relative w-full md:w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
                             placeholder="제목 검색"
@@ -54,16 +54,17 @@ export default function NoticePage() {
                             className="pl-8"
                         />
                     </div>
-                    <Button onClick={handleSearch}>검색</Button>
-                    {/* TODO: Check role for Write button visibility */}
-                    {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TEACHER') && (
-                        <Link href="/notice/write">
-                            <Button variant="outline" className="ml-2">
-                                <PenSquare className="w-4 h-4 mr-2" />
-                                글쓰기
-                            </Button>
-                        </Link>
-                    )}
+                    <div className="flex gap-2">
+                        <Button onClick={handleSearch} className="flex-1 md:flex-none">검색</Button>
+                        {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TEACHER') && (
+                            <Link href="/notice/write" className="flex-1 md:flex-none">
+                                <Button variant="outline" className="w-full">
+                                    <PenSquare className="w-4 h-4 mr-2" />
+                                    글쓰기
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </div>
 
