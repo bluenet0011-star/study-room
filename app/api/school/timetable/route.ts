@@ -6,7 +6,7 @@ const timetable = new Timetable();
 // Cache for School ID to avoid searching every time
 let cachedSchoolId: number | null = null;
 const SCHOOL_NAME = '동탄국제고등학교';
-const SCHOOL_CODE = 12490; // Hardcoded code for Dongtan International High School
+const SCHOOL_CODE = 79731; // Dongtan International High School (Corrected Code)
 
 export async function GET(request: Request) {
     try {
