@@ -140,17 +140,24 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     };
 
     const handleSeatClick = (id: string, e: React.MouseEvent) => {
-        // e.stopPropagation(); is handled by DndContext usually, but we might need it?
-        // Actually click on draggable might be intercepted.
-        // We often handle selection in a separate layer or assume tap.
-        // But for draggables, click vs drag is tricky.
-        // Let's rely on simple click.
-
         if (e.ctrlKey || e.metaKey) {
             setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
         } else {
             setSelectedIds([id]);
         }
+    };
+
+    const handleDoubleClick = (seat: any) => {
+        if (seat.type === 'SEAT') {
+            setEditingSeatId(seat.id);
+            setEditLabel(seat.label);
+        }
+    };
+
+    const saveLabel = () => {
+        if (!editingSeatId) return;
+        setSeats(prev => prev.map(s => s.id === editingSeatId ? { ...s, label: editLabel } : s));
+        setEditingSeatId(null);
     };
 
     const handleBackgroundClick = () => {
@@ -282,6 +289,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                                 <DraggableSeat
                                     {...seat}
                                     isSelected={selectedIds.includes(seat.id)}
+                                    onDoubleClick={() => handleDoubleClick(seat)}
                                 />
                             </div>
                         ))}
