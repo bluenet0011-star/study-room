@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -111,7 +112,8 @@ export default function TeacherStudentsPage() {
 
             <Card>
                 <CardContent className="p-0">
-                    <Table>
+                    {/* Desktop View */}
+                    <Table className="hidden md:table">
                         <TableHeader>
                             <TableRow className="bg-gray-50/50">
                                 <TableHead>학번/이름</TableHead>
@@ -180,6 +182,72 @@ export default function TeacherStudentsPage() {
                             ))}
                         </TableBody>
                     </Table>
+
+                    {/* Mobile View */}
+                    <div className="md:hidden divide-y">
+                        {filtered.map(student => (
+                            <div key={student.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-bold text-lg">{student.name}</div>
+                                        <div className="text-sm text-gray-500">@{student.loginId}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <Badge variant="outline" className="text-sm">
+                                            {student.grade}학년 {student.class}반 {student.number}번
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                {editingStudent?.id === student.id ? (
+                                    <div className="bg-gray-50 p-3 rounded-md space-y-3">
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div>
+                                                <Label className="text-xs">학년</Label>
+                                                <Input
+                                                    type="number"
+                                                    className="h-8"
+                                                    value={editingStudent.grade}
+                                                    onChange={e => setEditingStudent({ ...editingStudent, grade: parseInt(e.target.value) })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs">반</Label>
+                                                <Input
+                                                    type="number"
+                                                    className="h-8"
+                                                    value={editingStudent.class}
+                                                    onChange={e => setEditingStudent({ ...editingStudent, class: parseInt(e.target.value) })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs">번호</Label>
+                                                <Input
+                                                    type="number"
+                                                    className="h-8"
+                                                    value={editingStudent.number}
+                                                    onChange={e => setEditingStudent({ ...editingStudent, number: parseInt(e.target.value) })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" className="flex-1" onClick={handleUpdate}>저장</Button>
+                                            <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditingStudent(null)}>취소</Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" className="flex-1 h-9" onClick={() => setEditingStudent(student)}>
+                                            <Edit className="w-3 h-3 mr-1" /> 정보수정
+                                        </Button>
+                                        <Button size="sm" variant="outline" className="flex-1 h-9" onClick={() => { setSelectedStudentId(student.id); setPasswordModalOpen(true); }}>
+                                            <Lock className="w-3 h-3 mr-1" /> 비번변경
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
 

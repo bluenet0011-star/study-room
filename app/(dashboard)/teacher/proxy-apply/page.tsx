@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,18 @@ export default function ProxyApplyPage() {
         onCampus: true
     });
 
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchQuery.trim()) {
+                handleSearch();
+            } else {
+                setSearchResults([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
@@ -59,6 +71,7 @@ export default function ProxyApplyPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // ... (rest of submit logic matches original)
         if (!selectedStudent) {
             toast.error('학생을 선택하세요.');
             return;
@@ -133,24 +146,21 @@ export default function ProxyApplyPage() {
                                         </div>
                                     </div>
                                     <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="hover:bg-green-100 hover:text-green-800">
-                                        다른 학생 선택
+                                        창 닫기
                                     </Button>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    <div className="flex gap-2 relative">
+                                    <div className="relative">
                                         <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                                         <Input
-                                            placeholder="이름 또는 학번 검색..."
+                                            placeholder="이름 또는 학번을 입력하면 자동 검색됩니다..."
                                             value={searchQuery}
                                             onChange={e => setSearchQuery(e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && handleSearch()}
                                             className="pl-10"
                                             autoFocus
                                         />
-                                        <Button onClick={handleSearch} disabled={isSearching} type="button">
-                                            {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "검색"}
-                                        </Button>
+                                        {isSearching && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-gray-400" />}
                                     </div>
                                     {searchResults.length > 0 && (
                                         <ScrollArea className="h-48 border rounded-md bg-white shadow-sm">
@@ -175,31 +185,21 @@ export default function ProxyApplyPage() {
                         {/* Form Section */}
                         <form onSubmit={handleSubmit} className={cn("space-y-6 transition-opacity duration-300", !selectedStudent && "opacity-50 pointer-events-none")}>
 
-                            <div className="flex items-center space-x-4 p-4 border rounded-lg bg-gray-50/50">
-                                <Label htmlFor="on-campus" className="flex-1 font-medium">교내 활동 여부</Label>
-                                <div className="flex items-center space-x-2">
-                                    <div className="flex items-center gap-1 cursor-pointer" onClick={() => setFormData({ ...formData, onCampus: false })}>
-                                        <div className={cn("w-4 h-4 border rounded flex items-center justify-center", !formData.onCampus ? "bg-gray-900 border-gray-900" : "border-gray-400 bg-white")}>
-                                            {!formData.onCampus && <div className="w-2 h-2 bg-white rounded-[1px]" />}
-                                        </div>
-                                        <span className={!formData.onCampus ? "font-bold text-gray-900" : "text-gray-500"}>교외</span>
-                                    </div>
+                            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50/50">
+                                <Label htmlFor="on-campus" className="font-medium">교내 활동 여부</Label>
+                                <div className="flex items-center gap-2">
+                                    <span className={cn("text-sm", !formData.onCampus ? "font-bold text-gray-900" : "text-gray-500")}>교외</span>
                                     <Switch
                                         id="on-campus"
                                         checked={formData.onCampus}
                                         onCheckedChange={(c: boolean) => setFormData({ ...formData, onCampus: c })}
                                         className="data-[state=checked]:bg-green-600"
                                     />
-                                    <div className="flex items-center gap-1 cursor-pointer" onClick={() => setFormData({ ...formData, onCampus: true })}>
-                                        <div className={cn("w-4 h-4 border rounded flex items-center justify-center", formData.onCampus ? "bg-green-600 border-green-600" : "border-gray-400 bg-white")}>
-                                            {formData.onCampus && <div className="w-2 h-2 bg-white rounded-[1px]" />}
-                                        </div>
-                                        <span className={formData.onCampus ? "font-bold text-green-600" : "text-gray-500"}>교내</span>
-                                    </div>
+                                    <span className={cn("text-sm", formData.onCampus ? "font-bold text-green-600" : "text-gray-500")}>교내</span>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>유형</Label>
                                     <Select onValueChange={val => setFormData({ ...formData, type: val })} defaultValue={formData.type}>
@@ -223,17 +223,17 @@ export default function ProxyApplyPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>날짜</Label>
                                     <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="space-y-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="space-y-2 flex-1">
                                         <Label>시작</Label>
                                         <Input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} required />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 flex-1">
                                         <Label>종료</Label>
                                         <Input type="time" value={formData.endTime} onChange={e => setFormData({ ...formData, endTime: e.target.value })} required />
                                     </div>

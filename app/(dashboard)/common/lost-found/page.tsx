@@ -63,16 +63,27 @@ export default function LostFoundPage() {
 
             if (!uploadRes.ok) throw new Error(uploadData.Message);
 
-            // 2. Create DB Entry (Need to implement API)
-            // const res = await fetch('/api/lost-item', { 
-            //    method: 'POST',
-            //    body: JSON.stringify({ 
-            //        title, content, location, imagePath: uploadData.path 
-            //    }) 
-            // });
+            // 2. Create DB Entry
+            const res = await fetch('/api/common/lost-found', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    content,
+                    location,
+                    imagePath: uploadData.path,
+                    authorName: session?.user?.name
+                })
+            });
+
+            if (!res.ok) throw new Error("DB Save Failed");
 
             toast.success("등록되었습니다!");
             setIsCreateOpen(false);
+            // reset form
+            setTitle(''); setContent(''); setLocation(''); setFile(null);
+            // refresh
+            // fetchItems();
         } catch (e) {
             toast.error("업로드 실패");
         } finally {

@@ -52,9 +52,14 @@ export function MobileNav({ role }: { role: string }) {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[280px] sm:w-[320px]">
                     <div className="flex flex-col h-full">
-                        <div className="mb-6">
-                            <h1 className="text-xl font-bold">자습실 시스템</h1>
-                            <p className="text-xs text-gray-500">{role}</p>
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="relative w-10 h-10 shrink-0">
+                                <img src="/school-logo.png" alt="Logo" className="object-contain w-full h-full" />
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-bold leading-tight text-gray-900">동탄국제고</h1>
+                                <p className="text-[10px] text-primary font-bold tracking-wider uppercase">Future Leaders</p>
+                            </div>
                         </div>
                         <div className="flex-1 space-y-2">
                             {filteredLinks.map((link) => (
@@ -82,7 +87,7 @@ export function MobileNav({ role }: { role: string }) {
             </Sheet>
 
             {/* Title */}
-            <span className="text-sm font-semibold truncate">자습실 시스템</span>
+            <span className="text-sm font-semibold truncate">동탄국제고 자습실</span>
         </div>
     );
 }

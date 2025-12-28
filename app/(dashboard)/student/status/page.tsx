@@ -53,7 +53,8 @@ export default function StatusPage() {
             <h1 className="text-2xl font-bold mb-6">내 신청 현황</h1>
             <div className="space-y-4">
                 <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
-                    <Table>
+                    {/* Desktop View */}
+                    <Table className="hidden md:table">
                         <TableHeader>
                             <TableRow className="bg-gray-50/50">
                                 <TableHead className="w-[80px] text-center">유형</TableHead>
@@ -114,6 +115,55 @@ export default function StatusPage() {
                             ))}
                         </TableBody>
                     </Table>
+
+                    {/* Mobile View */}
+                    <div className="md:hidden divide-y">
+                        {permissions.length === 0 && (
+                            <div className="p-8 text-center text-gray-500">
+                                신청 내역이 없습니다.
+                            </div>
+                        )}
+                        {permissions.map(p => (
+                            <div key={p.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="text-xs whitespace-nowrap">
+                                            {typeMap[p.type] || p.type}
+                                        </Badge>
+                                        <Badge className={cn("text-xs whitespace-nowrap", getStatusColor(p.status))} variant="outline">
+                                            {statusMap[p.status] || p.status}
+                                        </Badge>
+                                    </div>
+                                    {(p.status === 'PENDING' || p.status === 'APPROVED') && (
+                                        <button
+                                            onClick={async () => {
+                                                if (!confirm('신청을 취소하시겠습니까?')) return;
+                                                await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
+                                                setPermissions(permissions.filter(perm => perm.id !== p.id));
+                                            }}
+                                            className="text-xs text-red-500 font-medium"
+                                        >
+                                            신청취소
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="text-sm font-medium">
+                                    {format(new Date(p.start), 'MM.dd(eee) HH:mm', { locale: ko })} ~ {format(new Date(p.end), 'HH:mm', { locale: ko })}
+                                </div>
+                                {(p.location || p.reason) && (
+                                    <div className="text-sm bg-gray-50 p-2 rounded text-gray-600">
+                                        {p.location && <div className="text-blue-600 font-medium text-xs mb-1">📍 {p.location}</div>}
+                                        {p.reason}
+                                    </div>
+                                )}
+                                {p.teacher?.name && (
+                                    <div className="text-xs text-gray-400 text-right">
+                                        담당: {p.teacher.name}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

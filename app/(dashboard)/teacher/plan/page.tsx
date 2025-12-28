@@ -71,7 +71,8 @@ export default function TeacherPlanPage() {
                     <CardTitle>퍼미션 활동 이력</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+                    {/* Desktop View */}
+                    <Table className="hidden md:table">
                         <TableHeader>
                             <TableRow className="bg-gray-50/50">
                                 <TableHead className="w-[150px]">학생 정보</TableHead>
@@ -123,6 +124,42 @@ export default function TeacherPlanPage() {
                             ))}
                         </TableBody>
                     </Table>
+
+                    {/* Mobile View */}
+                    <div className="md:hidden divide-y">
+                        {filteredRecords.length === 0 && (
+                            <div className="p-8 text-center text-gray-500">
+                                기록이 없습니다.
+                            </div>
+                        )}
+                        {filteredRecords.map((record) => (
+                            <div key={record.id} className="p-4 space-y-2">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-gray-900">{record.student.name}</span>
+                                        <span className="text-xs text-gray-500">
+                                            {record.student.grade}학년 {record.student.class}반 {record.student.number}번
+                                        </span>
+                                    </div>
+                                    <Badge variant={record.status === 'APPROVED' ? 'default' : 'secondary'}>
+                                        {statusMap[record.status] || record.status}
+                                    </Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">{typeMap[record.type] || record.type}</Badge>
+                                    <span className="text-sm font-medium">
+                                        {format(new Date(record.start), 'MM.dd HH:mm', { locale: ko })} ~ {format(new Date(record.end), 'HH:mm', { locale: ko })}
+                                    </span>
+                                </div>
+                                {(record.location || record.reason) && (
+                                    <div className="text-sm bg-gray-50 p-2 rounded text-gray-600">
+                                        {record.location && <div className="text-blue-600 font-medium text-xs mb-1">📍 {record.location}</div>}
+                                        {record.reason}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </CardContent>
             </Card>
         </div>

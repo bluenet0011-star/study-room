@@ -69,7 +69,7 @@ export default function TeacherReportsPage() {
                         <CardDescription>조회할 기간을 설정하세요.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>시작일</Label>
                                 <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />

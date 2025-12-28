@@ -105,31 +105,21 @@ export default function StudyPlanPage() {
                 </CardHeader>
                 <CardContent className="pt-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="flex items-center space-x-4 p-4 border rounded-lg bg-gray-50/50">
-                            <Label htmlFor="on-campus" className="flex-1 font-medium">교내 활동 여부</Label>
-                            <div className="flex items-center space-x-2">
-                                <div className="flex items-center gap-1 cursor-pointer" onClick={() => setFormData({ ...formData, onCampus: false })}>
-                                    <div className={cn("w-4 h-4 border rounded flex items-center justify-center", !formData.onCampus ? "bg-gray-900 border-gray-900" : "border-gray-400 bg-white")}>
-                                        {!formData.onCampus && <div className="w-2 h-2 bg-white rounded-[1px]" />}
-                                    </div>
-                                    <span className={!formData.onCampus ? "font-bold text-gray-900" : "text-gray-500"}>교외</span>
-                                </div>
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50/50">
+                            <Label htmlFor="on-campus" className="font-medium">교내 활동 여부</Label>
+                            <div className="flex items-center gap-2">
+                                <span className={cn("text-sm", !formData.onCampus ? "font-bold text-gray-900" : "text-gray-500")}>교외</span>
                                 <Switch
                                     id="on-campus"
                                     checked={formData.onCampus}
                                     onCheckedChange={(c: boolean) => setFormData({ ...formData, onCampus: c })}
                                     className="data-[state=checked]:bg-green-600"
                                 />
-                                <div className="flex items-center gap-1 cursor-pointer" onClick={() => setFormData({ ...formData, onCampus: true })}>
-                                    <div className={cn("w-4 h-4 border rounded flex items-center justify-center", formData.onCampus ? "bg-green-600 border-green-600" : "border-gray-400 bg-white")}>
-                                        {formData.onCampus && <div className="w-2 h-2 bg-white rounded-[1px]" />}
-                                    </div>
-                                    <span className={formData.onCampus ? "font-bold text-green-600" : "text-gray-500"}>교내</span>
-                                </div>
+                                <span className={cn("text-sm", formData.onCampus ? "font-bold text-green-600" : "text-gray-500")}>교내</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>유형</Label>
                                 <Select onValueChange={val => setFormData({ ...formData, type: val })} defaultValue={formData.type}>
@@ -153,17 +143,17 @@ export default function StudyPlanPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>시작 일시</Label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <Input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} required />
                                     <Input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} required />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <Label>종료 일시</Label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <Input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} required />
                                     <Input type="time" value={formData.endTime} onChange={e => setFormData({ ...formData, endTime: e.target.value })} required />
                                 </div>

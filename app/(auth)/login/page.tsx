@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,18 +32,10 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                // Assuming 'toast' is imported and available, otherwise this will cause an error.
-                // For this change, I'm assuming 'toast' is handled elsewhere or will be added.
-                // If not, the original setError logic would be more appropriate without toast.
-                // As per instructions, faithfully applying the provided Code Edit.
-                // toast.error("로그인 실패", {
-                //   description: "아이디 또는 비밀번호를 확인해주세요.",
-                // });
-                setError('아이디 또는 비밀번호가 올바르지 않습니다.'); // Keeping original error message for now
+                setError('아이디 또는 비밀번호가 올바르지 않습니다.');
                 setLoading(false);
             } else {
-                // toast.success("로그인 성공"); // Assuming toast is available
-                router.push("/"); // Always redirect to root dashboard
+                router.push("/");
                 router.refresh();
             }
         } catch (err) {
@@ -52,28 +45,36 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <div className="text-center text-sm font-medium text-gray-500 mb-2">Global Standard for Future Leaders</div>
-                    {/* Placeholder for Logo if needed */}
-                    <CardTitle className="text-2xl font-bold text-center leading-tight">
-                        동탄국제고<br />학습관리 시스템
-                    </CardTitle>
-                    <CardDescription className="text-center">
-                        시스템에 접속하려면 로그인하세요
-                    </CardDescription>
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-gray-100 p-4">
+            <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary animate-in fade-in zoom-in duration-500">
+                <CardHeader className="space-y-4 flex flex-col items-center pb-2">
+                    <div className="w-24 h-24 relative mb-2 transition-transform hover:scale-105 duration-300">
+                        <Image
+                            src="/school-logo.png"
+                            alt="Dongtan Global High School Logo"
+                            fill
+                            className="object-contain"
+                            priority
+                        />
+                    </div>
+                    <div className="text-center space-y-1">
+                        <div className="text-xs font-bold text-primary tracking-widest uppercase">Global Standard for Future Leaders</div>
+                        <CardTitle className="text-2xl font-bold text-gray-900 leading-tight">
+                            동탄국제고등학교<br />
+                            <span className="text-xl text-gray-600">자습실 관리 시스템</span>
+                        </CardTitle>
+                    </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="loginId">아이디</Label>
                             <Input
                                 id="loginId"
                                 name="loginId"
-                                placeholder="아이디를 입력하세요"
+                                placeholder="학번 또는 교직원 번호"
                                 required
-                                className="w-full"
+                                className="w-full h-11 focus-visible:ring-primary"
                             />
                         </div>
                         <div className="space-y-2">
@@ -84,18 +85,18 @@ export default function LoginPage() {
                                 type="password"
                                 placeholder="비밀번호를 입력하세요"
                                 required
-                                className="w-full"
+                                className="w-full h-11 focus-visible:ring-primary"
                             />
                         </div>
 
                         {error && (
-                            <div className="flex items-center gap-2 p-3 text-sm text-red-500 bg-red-50 rounded-md">
-                                <AlertCircle className="w-4 h-4" />
+                            <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-md animate-in slide-in-from-top-2">
+                                <AlertCircle className="w-4 h-4 shrink-0" />
                                 {error}
                             </div>
                         )}
 
-                        <Button type="submit" className="w-full" disabled={loading}>
+                        <Button type="submit" className="w-full h-11 text-base font-semibold shadow-md hover:shadow-lg transition-all" disabled={loading}>
                             {loading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -107,8 +108,9 @@ export default function LoginPage() {
                         </Button>
                     </form>
                 </CardContent>
-                <CardFooter className="text-center text-sm text-gray-500">
-                    비밀번호를 잊으셨다면 관리자에게 문의하세요.
+                <CardFooter className="flex flex-col gap-2 text-center text-xs text-gray-500 bg-gray-50/50 py-4 rounded-b-lg border-t">
+                    <p>비밀번호 분실 시 담당 교사에게 문의하세요.</p>
+                    <p className="opacity-70">© Dongtan Global High School. All rights reserved.</p>
                 </CardFooter>
             </Card>
         </div>

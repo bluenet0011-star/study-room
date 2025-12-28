@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { Search, PenSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { cn } from '@/lib/utils';
 
 interface Notice {
     id: string;
@@ -67,7 +68,8 @@ export default function NoticePage() {
             </div>
 
             <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
-                <Table>
+                {/* Desktop View */}
+                <Table className="hidden md:table">
                     <TableHeader>
                         <TableRow className="bg-gray-50/50">
                             <TableHead className="w-[80px] text-center">번호</TableHead>
@@ -96,7 +98,6 @@ export default function NoticePage() {
                                 </TableCell>
                                 <TableCell className="font-medium">
                                     {notice.title}
-                                    {/* New badge logic could go here */}
                                 </TableCell>
                                 <TableCell>{notice.author.name}</TableCell>
                                 <TableCell className="text-center text-gray-500 text-sm">
@@ -106,6 +107,38 @@ export default function NoticePage() {
                         ))}
                     </TableBody>
                 </Table>
+
+                {/* Mobile View */}
+                <div className="md:hidden divide-y">
+                    {notices.length === 0 && (
+                        <div className="p-8 text-center text-gray-500">
+                            등록된 공지사항이 없습니다.
+                        </div>
+                    )}
+                    {notices.map((notice, i) => (
+                        <div
+                            key={notice.id}
+                            className="p-4 cursor-pointer active:bg-gray-50"
+                            onClick={() => router.push(`/notice/${notice.id}`)}
+                        >
+                            <div className="flex items-start justify-between mb-2">
+                                <div className="flex flex-col gap-1">
+                                    {notice.important && (
+                                        <Badge variant="destructive" className="w-fit text-[10px] mb-1">중요</Badge>
+                                    )}
+                                    <h3 className="font-medium text-base line-clamp-2">{notice.title}</h3>
+                                </div>
+                                <span className={cn("text-xs text-gray-400 whitespace-nowrap ml-2", !notice.important && "mt-1")}>
+                                    {format(new Date(notice.createdAt), 'MM.dd')}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-500">
+                                <span>{notice.author.name}</span>
+                                <span className="text-xs text-gray-300">#{notices.length - i}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

@@ -126,12 +126,12 @@ export default async function DashboardContent() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredLinks.map((link) => (
                     <Link key={link.href} href={link.href} className="block h-full">
-                        <Card className="h-full hover:bg-accent/50 transition-colors cursor-pointer">
+                        <Card className="h-full hover:bg-red-50 hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-md">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-xl font-semibold">
+                                <CardTitle className="text-xl font-semibold group-hover:text-primary transition-colors">
                                     {link.name}
                                 </CardTitle>
-                                <link.icon className="h-6 w-6 text-muted-foreground" />
+                                <link.icon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                             </CardHeader>
                             <CardContent>
                                 <CardDescription className="text-sm mt-2 line-clamp-2">
