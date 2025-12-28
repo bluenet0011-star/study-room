@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { io } from "socket.io-client";
+
 
 export async function POST(req: Request) {
     const session = await auth();
@@ -31,9 +31,7 @@ export async function POST(req: Request) {
                 }
             });
 
-            // Notify via Socket
-            const socket = io("http://localhost:3000");
-            socket.emit("SEAT_UPDATE", { seatId, action: 'ASSIGN' });
+
 
             return NextResponse.json(assignment);
         } else if (action === "UNASSIGN") {
@@ -42,9 +40,7 @@ export async function POST(req: Request) {
                 data: { active: false }
             });
 
-            // Notify via Socket
-            const socket = io("http://localhost:3000");
-            socket.emit("SEAT_UPDATE", { seatId, action: 'UNASSIGN' });
+
 
             return NextResponse.json({ success: true });
         }

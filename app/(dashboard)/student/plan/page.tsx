@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch'; // Ensure you have this component or use standard checkbox
 import { Loader2, Calendar, ChevronsUpDown, Check } from 'lucide-react';
-import { useSocket } from '@/components/providers/SocketProvider';
+
 import { useSession } from 'next-auth/react';
 import { Checkbox } from '@/components/ui/checkbox'; // Fallback if switch unavailable
 import { toast } from 'sonner';
@@ -26,7 +26,7 @@ interface Teacher {
 export default function StudyPlanPage() {
     const router = useRouter();
     const { data: session } = useSession();
-    const socket = useSocket();
+
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [loading, setLoading] = useState(false);
     const [isTeacherOpen, setIsTeacherOpen] = useState(false);
@@ -73,12 +73,7 @@ export default function StudyPlanPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                if (socket) {
-                    socket.emit('NEW_PERMISSION', {
-                        ...data,
-                        studentName: session?.user?.name,
-                    });
-                }
+
                 toast.success("학습계획이 신청되었습니다.");
                 router.push('/student/status');
             } else {

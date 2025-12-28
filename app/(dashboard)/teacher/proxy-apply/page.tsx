@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Search, UserPlus, Calendar } from 'lucide-react';
-import { useSocket } from '@/components/providers/SocketProvider';
+
 import { useSession } from 'next-auth/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ interface Student {
 export default function ProxyApplyPage() {
     const router = useRouter();
     const { data: session } = useSession();
-    const socket = useSocket();
+
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Student[]>([]);
@@ -96,15 +96,7 @@ export default function ProxyApplyPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                if (socket) {
-                    socket.emit('PERMISSION_UPDATE', {
-                        id: data.id,
-                        status: 'APPROVED',
-                        studentId: data.studentId,
-                        teacherId: session?.user?.id,
-                        studentName: selectedStudent.name
-                    });
-                }
+
                 toast.success(`${selectedStudent.name} 학생의 퍼미션이 등록되었습니다.`);
                 router.push('/teacher/permissions');
             } else {
