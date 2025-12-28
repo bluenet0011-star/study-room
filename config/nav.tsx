@@ -37,7 +37,6 @@ export const NAV_LINKS = [
         description: "자습실 현황을 모니터링하고 관리합니다."
     },
     {
-    {
         name: "퍼미션 관리", // Renamed back to "퍼미션 관리" by user request
         href: "/teacher/plan",
         icon: CalendarCheck,
