@@ -58,11 +58,10 @@ export default function LoginPage() {
                         />
                     </div>
                     <div className="text-center space-y-1">
-                        <div className="text-xs font-bold text-primary tracking-widest uppercase">Global Standard for Future Leaders</div>
-                        <CardTitle className="text-2xl font-bold text-gray-900 leading-tight">
-                            동탄국제고등학교<br />
-                            <span className="text-xl text-gray-600">자습실 관리 시스템</span>
+                        <CardTitle className="text-4xl font-extrabold text-primary tracking-tighter">
+                            DGHS
                         </CardTitle>
+                        <span className="text-lg text-gray-500 font-medium tracking-wide">자습실 관리 시스템</span>
                     </div>
                 </CardHeader>
                 <CardContent className="pt-6">

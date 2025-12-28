@@ -123,7 +123,7 @@ export default async function DashboardContent() {
                 </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {filteredLinks.map((link) => (
                     <Link key={link.href} href={link.href} className="block h-full">
                         <Card className="h-full hover:bg-red-50 hover:border-primary/30 transition-all cursor-pointer group shadow-sm hover:shadow-md">

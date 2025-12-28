@@ -35,7 +35,7 @@ export function SideNav({ role }: { role: string }) {
                     <img src="/school-logo.png" alt="Logo" className="object-contain w-full h-full" />
                 </div>
                 <div>
-                    <h1 className="text-lg font-bold leading-tight text-gray-900">동탄국제고</h1>
+                    <h1 className="text-lg font-bold leading-tight text-gray-900">DGHS</h1>
                     <p className="text-[10px] text-primary font-bold tracking-wider uppercase">Future Leaders</p>
                 </div>
             </div>
@@ -43,8 +43,11 @@ export function SideNav({ role }: { role: string }) {
                 {filteredLinks.map((link) => (
                     <Link key={link.href} href={link.href}>
                         <Button
-                            variant={pathname === link.href || pathname.startsWith(link.href) && link.href !== '/' ? "secondary" : "ghost"}
-                            className="w-full justify-start gap-2"
+                            variant="ghost"
+                            className={cn(
+                                "w-full justify-start gap-2",
+                                (pathname === link.href || pathname.startsWith(link.href) && link.href !== '/') && "bg-red-50 text-primary border-r-4 border-primary font-bold rounded-l-none"
+                            )}
                         >
                             <link.icon className="w-4 h-4" />
                             {link.name}

@@ -25,23 +25,43 @@ export default function SeatRoomsPage() {
     }, []);
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">자습실 모니터링</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rooms.map(room => (
-                    <Link href={`/teacher/seats/${room.id}`} key={room.id}>
-                        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                            <CardHeader>
-                                <CardTitle>{room.name}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-gray-500">학년: {room.grade || '전체'}</p>
-                                <p className="text-sm text-gray-500">좌석수: {room.seats?.length || 0}</p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                ))}
+        <div className="p-6 space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">자습실 모니터링</h1>
+                <p className="text-muted-foreground mt-1">각 자습실의 실시간 좌석 현황을 확인합니다.</p>
             </div>
+            {rooms.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl">🪑</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">등록된 자습실이 없습니다</h3>
+                    <p className="text-gray-500 mt-2">관리자가 자습실을 생성할 때까지 기다려주세요.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {rooms.map(room => (
+                        <Link href={`/teacher/seats/${room.id}`} key={room.id}>
+                            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-primary/20 hover:border-t-primary">
+                                <CardHeader>
+                                    <CardTitle className="flex justify-between items-center">
+                                        <span>{room.name}</span>
+                                        <span className="text-xs font-normal bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+                                            {room.grade ? `${room.grade}학년` : '전체'}
+                                        </span>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center text-sm text-gray-500">
+                                        <span className="mr-2">총 좌석:</span>
+                                        <span className="font-bold text-gray-900">{room.seats?.length || 0}석</span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

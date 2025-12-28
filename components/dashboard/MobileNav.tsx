@@ -66,8 +66,11 @@ export function MobileNav({ role }: { role: string }) {
                                 <SheetClose asChild key={link.href}>
                                     <Link href={link.href} onClick={() => setOpen(false)}>
                                         <Button
-                                            variant={pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/') ? "secondary" : "ghost"}
-                                            className="w-full justify-start gap-2"
+                                            variant="ghost"
+                                            className={cn(
+                                                "w-full justify-start gap-2",
+                                                (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "bg-red-50 text-primary font-bold"
+                                            )}
                                         >
                                             <link.icon className="w-4 h-4" />
                                             {link.name}
@@ -87,7 +90,7 @@ export function MobileNav({ role }: { role: string }) {
             </Sheet>
 
             {/* Title */}
-            <span className="text-sm font-semibold truncate">동탄국제고 자습실</span>
+            <span className="text-sm font-semibold truncate">DGHS 자습실</span>
         </div>
     );
 }

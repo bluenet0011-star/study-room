@@ -89,9 +89,11 @@ export default function StudyPlanPage() {
     };
 
     return (
-        <div className="p-6 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-2">학습계획 / 이동 신청</h1>
-            <p className="text-gray-500 mb-6">자습 시간 중 이동이나 학습 계획을 신청합니다.</p>
+        <div className="p-6 max-w-2xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">학습계획 / 이동 신청</h1>
+                <p className="text-muted-foreground mt-1">자습 시간 중 이동이나 학습 계획을 신청합니다.</p>
+            </div>
 
             <Card className="border-t-4 border-t-blue-500 shadow-md">
                 <CardHeader className="bg-gray-50/50 pb-4">

@@ -41,8 +41,11 @@ export default function RoomsPage() {
     };
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">자습실 관리</h1>
+        <div className="p-6 space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">자습실 관리</h1>
+                <p className="text-muted-foreground mt-1">자습실을 생성하고 좌석 배치를 설정합니다.</p>
+            </div>
 
             <Card className="mb-6">
                 <CardHeader><CardTitle>새 자습실 생성</CardTitle></CardHeader>
@@ -64,7 +67,47 @@ export default function RoomsPage() {
                     <CardTitle>기존 자습실</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
+                    {/* Mobile Card View */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {rooms.map(room => (
+                            <Card key={room.id} className="shadow-sm border">
+                                <CardContent className="p-4">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="font-bold text-lg text-gray-900">{room.name}</h3>
+                                            <p className="text-sm text-gray-500">{room.grade ? `${room.grade}학년` : '전체 학년'}</p>
+                                        </div>
+                                        <div className="bg-gray-100 px-2 py-1 rounded text-xs text-gray-600 font-medium">
+                                            좌석 {room.seats?.length || 0}개
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 mt-4 pt-3 border-t">
+                                        <Link href={`/admin/rooms/${room.id}`} className="flex-1">
+                                            <Button variant="outline" size="sm" className="w-full">
+                                                좌석 배치
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="flex-1"
+                                            onClick={async () => {
+                                                if (!confirm('자습실을 삭제하시겠습니까?')) return;
+                                                await fetch(`/api/admin/rooms/${room.id}`, { method: 'DELETE' });
+                                                fetchRooms();
+                                            }}
+                                        >
+                                            삭제
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <Table className="hidden md:table">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>이름</TableHead>
