@@ -7,6 +7,7 @@ import { SeatEditor } from '@/components/seat-map/SeatEditor';
 
 export default function RoomEditorPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
+    const router = useRouter();
 
     return (
         <div className="p-6 h-[calc(100vh-60px)] flex flex-col">
