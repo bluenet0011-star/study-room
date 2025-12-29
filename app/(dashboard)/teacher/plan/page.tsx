@@ -55,7 +55,6 @@ export default function TeacherPlanPage() {
         fetchPermissions();
     }, []);
 
-    // ... (fetchPermissions existing code)
 
     // Bulk Search
     useEffect(() => {
@@ -124,7 +123,66 @@ export default function TeacherPlanPage() {
         }
     };
 
-    // ... (existing handleAction, etc.)
+    const fetchPermissions = async () => {
+        setLoading(true);
+        try {
+            const [pendingRes, historyRes] = await Promise.all([
+                fetch('/api/teacher/permissions'),
+                fetch('/api/teacher/permissions/history')
+            ]);
+
+            if (pendingRes.ok) {
+                const data = await pendingRes.json();
+                setPendingPermissions(data.filter((p: any) => p.status === 'PENDING'));
+            }
+
+            if (historyRes.ok) {
+                const data = await historyRes.json();
+                setHistoryPermissions(data);
+                // Only reset filtered history if search is empty to avoid clearing results while typing/polling (though polling resets currently)
+                if (!search) setFilteredHistory(data);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("데이터를 불러오는데 실패했습니다.");
+        }
+        setLoading(false);
+    };
+
+    const handleAction = async (id: string, status: string) => {
+        setProcessingId(id);
+        try {
+            const res = await fetch(`/api/teacher/permissions/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+
+            if (res.ok) {
+                toast.success(status === 'APPROVED' ? "승인되었습니다." : "반려되었습니다.");
+                fetchPermissions();
+            } else {
+                toast.error("처리 실패");
+            }
+        } catch (e) {
+            toast.error("오류가 발생했습니다.");
+        }
+        setProcessingId(null);
+    };
+
+    const handleSearch = () => {
+        if (!search.trim()) {
+            setFilteredHistory(historyPermissions);
+            return;
+        }
+        const query = search.toLowerCase();
+        const filtered = historyPermissions.filter(p =>
+            p.student.name.toLowerCase().includes(query) ||
+            (p.location && p.location.toLowerCase().includes(query)) ||
+            (p.reason && p.reason.toLowerCase().includes(query))
+        );
+        setFilteredHistory(filtered);
+    };
 
     if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin w-8 h-8 text-gray-400" /></div>;
 
