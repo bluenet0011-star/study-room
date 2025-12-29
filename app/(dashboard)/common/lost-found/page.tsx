@@ -162,14 +162,16 @@ export default function LostFoundPage() {
                             <div className="space-y-2">
                                 <Label>사진 업로드</Label>
                                 <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-sm text-gray-500 hover:bg-gray-50 cursor-pointer relative">
-                                    <Input
+                                    {/* Native input for iOS compatibility */}
+                                    <input
                                         type="file"
                                         accept="image/*"
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        capture="environment"
+                                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                         onChange={e => setFile(e.target.files?.[0] || null)}
                                     />
                                     <UploadCloud className="w-8 h-8 mb-2 text-gray-400" />
-                                    {file ? <span className="text-blue-600 font-medium">{file.name}</span> : <span>클릭하여 사진 선택</span>}
+                                    {file ? <span className="text-blue-600 font-medium">{file.name}</span> : <span>탭하여 사진 촬영 또는 선택</span>}
                                 </div>
                             </div>
                             <Button className="w-full" onClick={handleUpload} disabled={loading}>

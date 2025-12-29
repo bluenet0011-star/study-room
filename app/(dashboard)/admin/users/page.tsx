@@ -6,7 +6,7 @@ import { ExcelImport } from '@/components/admin/ExcelImport';
 import ExcelExport from "@/components/admin/ExcelExport";
 import ExcelTemplate from "@/components/admin/ExcelTemplate";
 import { Button } from "@/components/ui/button";
-import { Database } from "lucide-react";
+import { Database, Pencil, Trash2, Save, X } from "lucide-react";
 
 interface UserData {
     id: string;
@@ -139,13 +139,21 @@ export default function AdminUsersPage() {
                             <div className="pt-2 flex justify-end gap-2 border-t mt-2">
                                 {editingUser?.id === user.id ? (
                                     <>
-                                        <button onClick={handleUpdate} className="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700 transition-colors">저장</button>
-                                        <button onClick={() => setEditingUser(null)} className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded text-sm hover:bg-gray-300 transition-colors">취소</button>
+                                        <Button size="sm" onClick={handleUpdate} className="bg-green-600 hover:bg-green-700 h-8">
+                                            <Save className="h-4 w-4 mr-1" /> 저장
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => setEditingUser(null)} className="h-8">
+                                            <X className="h-4 w-4 mr-1" /> 취소
+                                        </Button>
                                     </>
                                 ) : (
                                     <>
-                                        <button onClick={() => setEditingUser(user)} className="border border-blue-600 text-blue-600 px-3 py-1.5 rounded text-sm hover:bg-blue-50 transition-colors">수정</button>
-                                        <button onClick={() => handleDelete(user.id)} className="border border-red-600 text-red-600 px-3 py-1.5 rounded text-sm hover:bg-red-50 transition-colors">삭제</button>
+                                        <Button size="sm" variant="outline" onClick={() => setEditingUser(user)} className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50">
+                                            <Pencil className="h-4 w-4 mr-1" /> 수정
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => handleDelete(user.id)} className="h-8 text-red-600 border-red-200 hover:bg-red-50">
+                                            <Trash2 className="h-4 w-4 mr-1" /> 삭제
+                                        </Button>
                                     </>
                                 )}
                             </div>
@@ -212,13 +220,21 @@ export default function AdminUsersPage() {
                                     <TableCell className="flex gap-2">
                                         {editingUser?.id === user.id ? (
                                             <>
-                                                <button onClick={handleUpdate} className="text-green-600 font-bold">저장</button>
-                                                <button onClick={() => setEditingUser(null)} className="text-gray-500">취소</button>
+                                                <Button size="sm" onClick={handleUpdate} className="bg-green-600 hover:bg-green-700 h-8 w-8 p-0">
+                                                    <Save className="h-4 w-4" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => setEditingUser(null)} className="h-8 w-8 p-0">
+                                                    <X className="h-4 w-4" />
+                                                </Button>
                                             </>
                                         ) : (
                                             <>
-                                                <button onClick={() => setEditingUser(user)} className="text-blue-600">수정</button>
-                                                <button onClick={() => handleDelete(user.id)} className="text-red-600">삭제</button>
+                                                <Button size="sm" variant="ghost" onClick={() => setEditingUser(user)} className="h-8 w-8 p-0 hover:text-blue-600">
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => handleDelete(user.id)} className="h-8 w-8 p-0 hover:text-red-600">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </>
                                         )}
                                     </TableCell>

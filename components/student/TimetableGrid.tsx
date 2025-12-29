@@ -93,7 +93,7 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
                                 return (
                                     <div key={dIdx} className={`p-1 md:p-3 flex items-center justify-center min-h-[50px] md:min-h-[60px] ${currentDay === dIdx + 1 ? 'bg-blue-50/30' : ''}`}>
                                         {displaySubject ? (
-                                            <span className="font-medium text-gray-800 break-keep text-[10px] md:text-sm leading-tight">
+                                            <span className="font-medium text-gray-800 break-keep text-xs md:text-sm leading-tight tracking-tight">
                                                 {displaySubject}
                                             </span>
                                         ) : (

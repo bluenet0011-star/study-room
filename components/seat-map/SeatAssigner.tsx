@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, UserPlus, UserMinus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
-import { ExcelBulkAssign } from './ExcelBulkAssign';
 
 interface Seat {
     id: string;
@@ -54,7 +54,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
     const fetchSeats = async (isBackground = false) => {
         if (!isBackground) setLoading(true);
         try {
-            const res = await fetch(`/api/teacher/rooms/${roomId}/status`);
+            const res = await fetch(`/api/teacher/rooms/${roomId}/status`, { cache: 'no-store' });
             const data = await res.json();
             setSeats(data);
         } catch (e) {
@@ -122,7 +122,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="flex justify-end">
-                <ExcelBulkAssign roomId={roomId} onUpdate={() => fetchSeats(true)} />
+                {/* Excel Actions are now in the parent page */}
             </div>
             <div className="border bg-gray-50 relative overflow-auto h-[600px] rounded-lg shadow-inner p-4">
                 <div className="relative min-w-[800px] min-h-[600px]">
@@ -138,15 +138,18 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                             return (
                                 <div
                                     key={seat.id}
-                                    className={`absolute flex items-center justify-center text-xs select-none
-                                        ${seat.type === 'WALL' ? 'bg-gray-800 border-2 border-gray-900 z-0' :
-                                            seat.type === 'WINDOW' ? 'bg-blue-200 border-2 border-blue-400 z-0' :
-                                                seat.type === 'DOOR' ? 'bg-amber-800/20 border-2 border-amber-800 rounded-sm z-0' : ''}
-                                    `}
+                                    className={cn(
+                                        "absolute flex items-center justify-center text-xs select-none font-bold",
+                                        seat.type === 'WALL' ? "bg-gray-800 border-2 border-gray-900 z-0" : "z-10",
+                                        seat.type === 'WINDOW' && "bg-blue-100 border border-blue-300 text-blue-600 rounded-sm",
+                                        seat.type === 'DOOR' && "bg-amber-100 border border-amber-300 text-amber-700 rounded-sm",
+                                        seat.type === 'PILLAR' && "bg-stone-300 border border-stone-400 text-stone-700 rounded-sm"
+                                    )}
                                     style={{ left, top, width, height }}
                                 >
-                                    {seat.type === 'WINDOW' && <div className="w-full h-1 bg-blue-400/50" />}
-                                    {seat.type === 'DOOR' && <div className="w-1/2 h-full border-r-2 border-dashed border-amber-800/50" />}
+                                    {seat.type === 'WINDOW' && "창문"}
+                                    {seat.type === 'DOOR' && "문"}
+                                    {seat.type === 'PILLAR' && "기둥"}
                                 </div>
                             );
                         }
@@ -254,6 +257,6 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }

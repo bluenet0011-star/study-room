@@ -101,12 +101,14 @@ export default function NoticeWritePage() {
                     <div className="flex items-center gap-4">
                         <Label className="w-20">첨부파일</Label>
                         <div className="flex-1 flex items-center gap-2">
-                            <Input
+                            {/* Native input for iOS compatibility */}
+                            <input
                                 type="file"
                                 multiple
+                                accept="*/*"
                                 onChange={handleFileChange}
                                 disabled={uploading}
-                                className="w-full max-w-sm"
+                                className="w-full max-w-sm text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             />
                             <span className="text-xs text-gray-400">최대 10MB</span>
                         </div>

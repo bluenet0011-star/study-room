@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { MapPin, Home, Stethoscope, Library, School, Store, Edit2, Trash2, X, Save, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
@@ -60,31 +62,25 @@ export default function StatusPage() {
     };
 
     const getLocationIcon = (location?: string) => {
-        if (!location) return '📍';
-        if (location.includes('병원')) return '🏥';
-        if (location.includes('집') || location.includes('자택')) return '🏠';
-        if (location.includes('도서관')) return '📚';
-        if (location.includes('화장실')) return '🚽';
-        if (location.includes('보건실')) return '💊';
-        if (location.includes('교무실')) return '🏫';
-        if (location.includes('매점')) return '🏪';
-        return '📍';
+        if (!location) return <MapPin className="w-4 h-4" />;
+        if (location.includes('병원') || location.includes('보건')) return <Stethoscope className="w-4 h-4" />;
+        if (location.includes('집') || location.includes('자택')) return <Home className="w-4 h-4" />;
+        if (location.includes('도서관') || location.includes('독서')) return <Library className="w-4 h-4" />;
+        if (location.includes('매점')) return <Store className="w-4 h-4" />;
+        if (location.includes('교무실')) return <School className="w-4 h-4" />;
+        return <MapPin className="w-4 h-4" />;
     };
 
     const handleEdit = (p: Permission) => {
         setEditForm({
             id: p.id,
             type: p.type,
-            start: p.start.split('T')[0], // Extract date
+            start: p.start.split('T')[0],
             startTime: new Date(p.start).toTimeString().slice(0, 5),
             endTime: new Date(p.end).toTimeString().slice(0, 5),
             reason: p.reason,
             location: p.location || '',
-            teacherId: p.teacher?.id // Note: API might not return teacher ID in list, verify if needed
-            // Actually API returns { teacher: { name } }, maybe not ID. 
-            // If ID is missing, we might need to ask user to select teacher again or fetch details.
-            // Let's assume user re-selects or we keep current if not changed (but we lack ID).
-            // Simplest: Ask user to select teacher again if we don't have ID.
+            teacherId: p.teacher?.id
         });
         setIsEditing(true);
     };
@@ -93,14 +89,8 @@ export default function StatusPage() {
         if (!editForm) return;
         setLoading(true);
         try {
-            // Combine date/time
-            // Note: Original start/end might be full ISO strings. simple split might fail timezone.
-            // But for editing, user picks new times.
             const startIso = new Date(`${editForm.start}T${editForm.startTime}`).toISOString();
-            const endIso = new Date(`${editForm.start}T${editForm.endTime}`).toISOString(); // Assume same day for simplicity or add end date picker
-            // Wait, original PlanPage has startDate and endDate.
-            // Let's accept startDate/endDate relative to the original or just single date for simplicity?
-            // To be robust, let's use the UI's simple date inputs.
+            const endIso = new Date(`${editForm.start}T${editForm.endTime}`).toISOString();
 
             const res = await fetch(`/api/student/permissions/${editForm.id}`, {
                 method: 'PATCH',
@@ -111,10 +101,7 @@ export default function StatusPage() {
                     end: endIso,
                     reason: editForm.reason,
                     location: editForm.location,
-                    teacherId: editForm.teacherId || permissions.find(p => p.id === editForm.id)?.teacher?.name // Fallback or error?
-                    // We need teacherId. List API returns teacher object with Name. 
-                    // We need to match name to ID or fetch detail. 
-                    // Let's require teacher selection in Edit or try to find ID from teachers list by name.
+                    teacherId: editForm.teacherId || permissions.find(p => p.id === editForm.id)?.teacher?.id
                 })
             });
 
@@ -130,7 +117,6 @@ export default function StatusPage() {
         }
         setLoading(false);
     };
-
 
     return (
         <div className="p-4 md:p-6 w-full max-w-2xl mx-auto">
@@ -171,7 +157,7 @@ export default function StatusPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col text-sm">
-                                            {p.location && <span className="font-semibold text-blue-600 mb-0.5">{getLocationIcon(p.location)} {p.location}</span>}
+                                            {p.location && <span className="font-semibold text-blue-600 mb-0.5 flex items-center gap-1">{getLocationIcon(p.location)} {p.location}</span>}
                                             <span className="text-gray-600 truncate max-w-[150px]" title={p.reason}>{p.reason}</span>
                                         </div>
                                     </TableCell>
@@ -183,37 +169,29 @@ export default function StatusPage() {
                                             {statusMap[p.status] || p.status}
                                         </Badge>
                                         {p.status === 'PENDING' && (
-                                            <div className="flex gap-1 justify-center mt-1">
-                                                <button
-                                                    onClick={() => handleEdit(p)}
-                                                    className="text-xs text-blue-500 underline"
-                                                >
-                                                    수정
-                                                </button>
-                                                <span className="text-gray-300">|</span>
-                                                <button
-                                                    onClick={async () => {
-                                                        if (!confirm('신청을 취소하시겠습니까?')) return;
-                                                        await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
-                                                        setPermissions(permissions.filter(perm => perm.id !== p.id));
-                                                    }}
-                                                    className="text-xs text-red-500 underline"
-                                                >
-                                                    취소
-                                                </button>
-                                            </div>
-                                        )}
-                                        {p.status === 'APPROVED' && (
-                                            <button
-                                                onClick={async () => {
+                                            <div className="flex gap-1 justify-center mt-2">
+                                                <Button size="sm" variant="ghost" onClick={() => handleEdit(p)} className="h-6 w-6 p-0 hover:text-blue-600">
+                                                    <Edit2 className="w-3 h-3" />
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={async () => {
                                                     if (!confirm('신청을 취소하시겠습니까?')) return;
                                                     await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
                                                     setPermissions(permissions.filter(perm => perm.id !== p.id));
-                                                }}
-                                                className="block mt-1 text-xs text-red-500 underline mx-auto"
-                                            >
-                                                취소
-                                            </button>
+                                                }} className="h-6 w-6 p-0 hover:text-red-600">
+                                                    <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                        {p.status === 'APPROVED' && (
+                                            <div className="flex justify-center mt-2">
+                                                <Button size="sm" variant="ghost" onClick={async () => {
+                                                    if (!confirm('신청을 취소하시겠습니까?')) return;
+                                                    await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
+                                                    setPermissions(permissions.filter(perm => perm.id !== p.id));
+                                                }} className="h-6 w-6 p-0 hover:text-red-600">
+                                                    <X className="w-3 h-3" />
+                                                </Button>
+                                            </div>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -241,24 +219,18 @@ export default function StatusPage() {
                                     </div>
                                     <div className="flex gap-2">
                                         {p.status === 'PENDING' && (
-                                            <button
-                                                onClick={() => handleEdit(p)}
-                                                className="text-xs text-blue-500 font-medium"
-                                            >
-                                                수정
-                                            </button>
+                                            <Button size="sm" variant="outline" onClick={() => handleEdit(p)} className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50">
+                                                <Edit2 className="w-3 h-3 mr-1" /> 수정
+                                            </Button>
                                         )}
                                         {(p.status === 'PENDING' || p.status === 'APPROVED') && (
-                                            <button
-                                                onClick={async () => {
-                                                    if (!confirm('신청을 취소하시겠습니까?')) return;
-                                                    await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
-                                                    setPermissions(permissions.filter(perm => perm.id !== p.id));
-                                                }}
-                                                className="text-xs text-red-500 font-medium"
-                                            >
-                                                취소
-                                            </button>
+                                            <Button size="sm" variant="outline" onClick={async () => {
+                                                if (!confirm('신청을 취소하시겠습니까?')) return;
+                                                await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
+                                                setPermissions(permissions.filter(perm => perm.id !== p.id));
+                                            }} className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50">
+                                                <Trash2 className="w-3 h-3 mr-1" /> 취소
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
@@ -267,7 +239,7 @@ export default function StatusPage() {
                                 </div>
                                 {(p.location || p.reason) && (
                                     <div className="text-sm bg-gray-50 p-2 rounded text-gray-600">
-                                        {p.location && <div className="text-blue-600 font-medium text-xs mb-1">{getLocationIcon(p.location)} {p.location}</div>}
+                                        {p.location && <div className="text-blue-600 font-medium text-xs mb-1 flex items-center gap-1">{getLocationIcon(p.location)} {p.location}</div>}
                                         {p.reason}
                                     </div>
                                 )}
@@ -318,7 +290,7 @@ export default function StatusPage() {
                                     onChange={e => setEditForm({ ...editForm, reason: e.target.value })}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-3">
                                 <div>
                                     <label className="text-sm font-medium">날짜</label>
                                     <input
@@ -328,8 +300,8 @@ export default function StatusPage() {
                                         onChange={e => setEditForm({ ...editForm, start: e.target.value })}
                                     />
                                 </div>
-                                <div className="flex gap-1">
-                                    <div className="flex-1">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
                                         <label className="text-sm font-medium">시작</label>
                                         <input
                                             type="time"
@@ -338,7 +310,7 @@ export default function StatusPage() {
                                             onChange={e => setEditForm({ ...editForm, startTime: e.target.value })}
                                         />
                                     </div>
-                                    <div className="flex-1">
+                                    <div>
                                         <label className="text-sm font-medium">종료</label>
                                         <input
                                             type="time"
@@ -367,19 +339,11 @@ export default function StatusPage() {
                             </div>
 
                             <div className="flex justify-end gap-2 pt-4">
-                                <button
-                                    className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
-                                    onClick={() => setIsEditing(false)}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
-                                    onClick={handleUpdate}
-                                    disabled={loading}
-                                >
-                                    {loading ? '저장 중...' : '저장'}
-                                </button>
+                                <Button variant="ghost" onClick={() => setIsEditing(false)}>취소</Button>
+                                <Button onClick={handleUpdate} disabled={loading}>
+                                    {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                                    저장
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>

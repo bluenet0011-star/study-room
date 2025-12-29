@@ -49,7 +49,7 @@ model Seat {
   id        String   @id @default(cuid())
   roomId    String
   label     String   // Display number/text
-  type      String   @default("SEAT") // SEAT, WINDOW, DOOR, WALL, EMPTY
+  type      String   @default("SEAT") // SEAT, WINDOW, DOOR, WALL, PILLAR, EMPTY
   rotation  Int      @default(0)
   x         Int      // Grid coordinates
   y         Int
