@@ -1,50 +1,53 @@
 import { NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
-
-const DB_PATH = path.join(process.cwd(), 'data/lost-items.json');
-
-// Ensure data dir exists
-if (!fs.existsSync(path.dirname(DB_PATH))) {
-    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-}
-
-function getItems() {
-    if (!fs.existsSync(DB_PATH)) return [];
-    try {
-        const data = fs.readFileSync(DB_PATH, 'utf-8');
-        return JSON.parse(data);
-    } catch {
-        return [];
-    }
-}
-
-function saveItems(items: any[]) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(items, null, 2));
-}
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export async function GET() {
-    return NextResponse.json(getItems());
+    try {
+        const items = await prisma.lostItem.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                author: {
+                    select: { name: true }
+                }
+            }
+        });
+        return NextResponse.json(items);
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 });
+    }
 }
 
 export async function POST(request: Request) {
     try {
+        const session = await auth();
+        if (!session?.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const body = await request.json();
-        const items = getItems();
+        const { title, content, location, imagePath } = body;
 
-        const newItem = {
-            id: Date.now().toString(),
-            ...body,
-            createdAt: new Date().toISOString(),
-            // Mock author if not provided (server session handling omitted for brevity/speed)
-            author: { name: body.authorName || '익명' }
-        };
-
-        items.unshift(newItem); // Add to top
-        saveItems(items);
+        const newItem = await prisma.lostItem.create({
+            data: {
+                title,
+                content,
+                location,
+                imagePath,
+                authorId: session.user.id,
+                status: 'LOST'
+            },
+            include: {
+                author: {
+                    select: { name: true }
+                }
+            }
+        });
 
         return NextResponse.json(newItem);
     } catch (error) {
+        console.error("Failed to save lost item:", error);
         return NextResponse.json({ error: "Failed to save" }, { status: 500 });
     }
 }

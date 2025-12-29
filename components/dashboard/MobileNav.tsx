@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { LayoutDashboard, Users, DoorOpen, CalendarCheck, LogOut, FileText, QrCode, Menu, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, DoorOpen, CalendarCheck, LogOut, FileText, QrCode, Menu, ArrowLeft, HelpCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 
@@ -16,20 +17,23 @@ export function MobileNav({ role }: { role: string }) {
     const router = useRouter();
     const { data: session } = useSession();
     const [open, setOpen] = useState(false);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     const filteredLinks = NAV_LINKS.filter(link => link.roles.includes(role));
 
     return (
         <div className="flex items-center gap-2 p-4 border-b lg:hidden bg-white">
             {/* Back Button */}
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.back()}
-                className="flex-shrink-0"
-            >
-                <ArrowLeft className="h-5 w-5" />
-            </Button>
+            {pathname !== '/' && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => router.back()}
+                    className="flex-shrink-0"
+                >
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
+            )}
 
             {/* Hamburger Menu */}
             <Sheet open={open} onOpenChange={setOpen}>
@@ -74,7 +78,11 @@ export function MobileNav({ role }: { role: string }) {
                                 </SheetClose>
                             ))}
                         </div>
-                        <div className="mt-auto pt-4 border-t">
+                        <div className="mt-auto pt-4 border-t space-y-2">
+                            <Button variant="ghost" className="w-full gap-2 justify-start text-gray-600" onClick={() => setIsGuideOpen(true)}>
+                                <HelpCircle className="w-4 h-4" />
+                                앱 설치 방법
+                            </Button>
                             <Button variant="outline" className="w-full gap-2" onClick={() => signOut()}>
                                 <LogOut className="w-4 h-4" />
                                 로그아웃
@@ -86,6 +94,45 @@ export function MobileNav({ role }: { role: string }) {
 
             {/* Title */}
             <span className="text-sm font-semibold truncate">DGHS 자습실</span>
+
+            {/* Guide Dialog */}
+            <Dialog open={isGuideOpen} onOpenChange={setIsGuideOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>앱 설치 / 홈 화면 추가 방법</DialogTitle>
+                        <DialogDescription>
+                            편리한 사용을 위해 앱을 홈 화면에 추가하세요.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-2">
+                            <h3 className="font-semibold flex items-center gap-2">
+                                🍎 iOS (iPhone/iPad)
+                            </h3>
+                            <ol className="list-decimal list-inside text-sm space-y-1 text-gray-700">
+                                <li>Safari 브라우저에서 접속합니다.</li>
+                                <li>하단의 <strong>공유</strong> 버튼 <span className="inline-block border rounded px-1 text-xs">⎋</span>을 누릅니다.</li>
+                                <li><strong>&apos;홈 화면에 추가&apos;</strong> 메뉴를 선택합니다.</li>
+                                <li><strong>추가</strong>를 누르면 앱 아이콘이 생성됩니다.</li>
+                            </ol>
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="font-semibold flex items-center gap-2">
+                                🤖 Android (Galaxy/Pixel)
+                            </h3>
+                            <ol className="list-decimal list-inside text-sm space-y-1 text-gray-700">
+                                <li>Chrome 브라우저에서 접속합니다.</li>
+                                <li>상단의 <strong>메뉴</strong> 버튼 <span className="inline-block border rounded px-1 text-xs">⋮</span>을 누릅니다.</li>
+                                <li><strong>&apos;앱 설치&apos;</strong> 또는 <strong>&apos;홈 화면에 추가&apos;</strong>를 선택합니다.</li>
+                                <li>설치 팝업에서 <strong>설치</strong>를 누릅니다.</li>
+                            </ol>
+                        </div>
+                        <div className="bg-yellow-50 p-3 rounded text-sm text-yellow-800">
+                            * 홈 화면에 추가하면 <strong>전체 화면</strong>으로 더 쾌적하게 이용할 수 있으며, 로그인 상태가 더 오래 유지됩니다.
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

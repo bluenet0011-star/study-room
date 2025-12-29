@@ -13,7 +13,7 @@ export default function RoomAssignmentPage({ params }: { params: Promise<{ id: s
     return (
         <div className="p-6 h-[calc(100vh-60px)] flex flex-col">
             <div className="flex items-center gap-4 mb-4">
-                <Link href="/admin/assignments">
+                <Link href="/admin/rooms">
                     <Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button>
                 </Link>
                 <h1 className="text-2xl font-bold">학생 좌석 배정</h1>

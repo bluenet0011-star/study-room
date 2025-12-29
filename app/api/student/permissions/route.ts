@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     const permissions = await prisma.permission.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        include: { teacher: { select: { name: true } } }
+        include: { teacher: { select: { id: true, name: true } } }
     });
     return NextResponse.json(permissions);
 }

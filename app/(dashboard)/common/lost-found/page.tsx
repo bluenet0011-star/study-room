@@ -37,14 +37,25 @@ export default function LostFoundPage() {
     const [location, setLocation] = useState('');
     const [file, setFile] = useState<File | null>(null);
 
-    // Fetch Items (Mock for now, needs API)
+    // Fetch Items
     useEffect(() => {
-        // Need to implement GET API
-        // fetchItems(); 
+        fetchItems();
     }, []);
 
+    const fetchItems = async () => {
+        try {
+            const res = await fetch('/api/common/lost-found');
+            if (res.ok) {
+                const data = await res.json();
+                setItems(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     const handleUpload = async () => {
-        if (!title || !content) {
+        if (!title.trim() || !content.trim()) {
             toast.error("제목과 내용을 입력해주세요.");
             return;
         }
@@ -62,10 +73,10 @@ export default function LostFoundPage() {
                     method: 'POST',
                     body: formData
                 });
-                const uploadData = await uploadRes.json();
 
-                if (!uploadRes.ok) throw new Error(uploadData.Message);
-                imagePath = uploadData.path;
+                if (!uploadRes.ok) throw new Error("Image upload failed");
+                const uploadData = await uploadRes.json();
+                imagePath = uploadData.url; // Note: API returns 'url', not 'path'
             }
 
             // 2. Create DB Entry
@@ -76,8 +87,7 @@ export default function LostFoundPage() {
                     title,
                     content,
                     location,
-                    imagePath: imagePath, // Can be empty string
-                    authorName: session?.user?.name
+                    imagePath,
                 })
             });
 
@@ -88,7 +98,7 @@ export default function LostFoundPage() {
             // reset form
             setTitle(''); setContent(''); setLocation(''); setFile(null);
             // refresh
-            // fetchItems();
+            fetchItems();
         } catch (e) {
             console.error(e);
             toast.error("등록에 실패했습니다.");
@@ -96,6 +106,27 @@ export default function LostFoundPage() {
             setLoading(false);
         }
     };
+
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent card click
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+
+        try {
+            const res = await fetch(`/api/common/lost-found/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                toast.success("삭제되었습니다.");
+                fetchItems();
+                setSelectedId(null); // Close detail if open
+            } else {
+                toast.error("삭제 권한이 없거나 실패했습니다.");
+            }
+        } catch (e) {
+            toast.error("오류가 발생했습니다.");
+        }
+    };
+
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const selectedItem = items.find(i => i.id === selectedId);
 
     return (
         <div className="p-6 space-y-6">
@@ -149,28 +180,101 @@ export default function LostFoundPage() {
                 </Dialog>
             </div>
 
-            {/* Empty State / Grid - Placeholder */}
+            {/* Items Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {/* Items would map here */}
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <div className="aspect-square bg-gray-100 relative">
-                        {/* Image Placeholder */}
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400">이미지 없음</div>
+                {items.length === 0 && (
+                    <div className="col-span-full text-center py-10 text-gray-500">
+                        등록된 분실물이 없습니다.
                     </div>
-                    <CardHeader className="p-4 pb-2">
-                        <div className="flex justify-between items-start">
-                            <CardTitle className="text-base line-clamp-1">에어팟 프로 오른쪽</CardTitle>
-                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">보관중</Badge>
+                )}
+                {items.map(item => (
+                    <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => setSelectedId(item.id)}>
+                        <div className="aspect-square bg-gray-100 relative overflow-hidden rounded-t-lg">
+                            {item.imagePath ? (
+                                <Image src={item.imagePath} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform" />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-50">
+                                    <span className="text-xs">이미지 없음</span>
+                                </div>
+                            )}
                         </div>
-                        <CardDescription className="flex items-center gap-1 text-xs">
-                            <MapPin className="w-3 h-3" /> 3층 홈베이스
-                        </CardDescription>
-                    </CardHeader>
-                    <CardFooter className="p-4 pt-0 text-xs text-gray-500">
-                        2024.12.27 등록
-                    </CardFooter>
-                </Card>
+                        <CardHeader className="p-4 pb-2">
+                            <div className="flex justify-between items-start">
+                                <CardTitle className="text-base line-clamp-1">{item.title}</CardTitle>
+                                <Badge variant={item.status === 'FOUND' ? 'default' : 'secondary'} className={item.status === 'LOST' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : ''}>
+                                    {item.status === 'LOST' ? '분실' : '습득'}
+                                </Badge>
+                            </div>
+                            <CardDescription className="flex items-center gap-1 text-xs">
+                                <MapPin className="w-3 h-3" /> {item.location || '장소 미상'}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardFooter className="p-4 pt-0 flex justify-between items-center text-xs text-gray-500">
+                            <span>{item.author.name}</span>
+                            <div className="flex items-center gap-2">
+                                <span>{(new Date(item.createdAt)).toLocaleDateString()}</span>
+                            </div>
+                        </CardFooter>
+                    </Card>
+                ))}
             </div>
+
+            {/* Detail Dialog */}
+            <Dialog open={!!selectedId} onOpenChange={(o) => !o && setSelectedId(null)}>
+                <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl">{selectedItem?.title}</DialogTitle>
+                    </DialogHeader>
+
+                    {selectedItem && (
+                        <div className="space-y-6">
+                            {selectedItem.imagePath ? (
+                                <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black/5 border">
+                                    <Image src={selectedItem.imagePath} alt={selectedItem.title} fill className="object-contain" />
+                                </div>
+                            ) : (
+                                <div className="h-32 bg-gray-50 flex items-center justify-center rounded-lg text-gray-400">
+                                    이미지가 없습니다.
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-500 block mb-1">상태</span>
+                                    <Badge variant={selectedItem.status === 'FOUND' ? 'default' : 'secondary'} className={selectedItem.status === 'LOST' ? 'bg-yellow-100 text-yellow-800' : ''}>
+                                        {selectedItem.status === 'LOST' ? '분실' : '습득'}
+                                    </Badge>
+                                </div>
+                                <div className="p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-500 block mb-1">장소</span>
+                                    <span className="font-medium">{selectedItem.location || '-'}</span>
+                                </div>
+                                <div className="p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-500 block mb-1">작성자</span>
+                                    <span className="font-medium">{selectedItem.author.name}</span>
+                                </div>
+                                <div className="p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-500 block mb-1">등록일</span>
+                                    <span className="font-medium">{(new Date(selectedItem.createdAt)).toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div className="p-4 border rounded-lg bg-white whitespace-pre-wrap leading-relaxed">
+                                {selectedItem.content}
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2 border-t">
+                                {(session?.user?.id === selectedItem.authorId || session?.user?.role === 'ADMIN') && (
+                                    <Button variant="destructive" onClick={(e) => handleDelete(selectedItem.id, e)}>
+                                        삭제하기
+                                    </Button>
+                                )}
+                                <Button variant="outline" onClick={() => setSelectedId(null)}>닫기</Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

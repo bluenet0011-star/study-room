@@ -17,12 +17,14 @@ export function SideNav({ role }: { role: string }) {
     return (
         <div className="flex flex-col h-full border-r bg-gray-50/40">
             <div className="p-6 flex items-center gap-3">
-                <div className="relative w-10 h-10 shrink-0">
-                    <Image src="/school-logo.png" alt="Logo" fill className="object-contain" priority />
-                </div>
-                <div>
-                    <h1 className="text-lg font-bold leading-tight text-gray-900">DGHS</h1>
-                </div>
+                <Link href="/" className="flex items-center gap-3">
+                    <div className="relative w-10 h-10 shrink-0">
+                        <Image src="/school-logo.png" alt="Logo" fill className="object-contain" priority />
+                    </div>
+                    <div>
+                        <h1 className="text-lg font-bold leading-tight text-gray-900">DGHS</h1>
+                    </div>
+                </Link>
             </div>
             <div className="flex-1 px-4 space-y-2">
                 {filteredLinks.map((link) => (

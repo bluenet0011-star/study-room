@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -16,22 +16,25 @@ interface Notice {
     createdAt: string;
 }
 
-export default function NoticeDetailPage({ params }: { params: { id: string } }) {
+
+export default function NoticeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { data: session } = useSession();
     const [notice, setNotice] = useState<Notice | null>(null);
     const router = useRouter();
+    const { id } = use(params);
 
     useEffect(() => {
-        fetch(`/api/notices/${params.id}`)
+        if (!id) return;
+        fetch(`/api/notices/${id}`)
             .then(res => res.json())
             .then(setNotice)
             .catch(console.error);
-    }, [params.id]);
+    }, [id]);
 
     const handleDelete = async () => {
         if (!confirm("삭제하시겠습니까?")) return;
         try {
-            const res = await fetch(`/api/notices/${params.id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/notices/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success("삭제되었습니다.");
                 router.push('/notice');

@@ -8,8 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Plus, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const typeMap: Record<string, string> = {
     MOVEMENT: '이동',
@@ -32,69 +36,103 @@ export default function TeacherPlanPage() {
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
+    // Bulk Create States
+    const [isBulkOpen, setIsBulkOpen] = useState(false);
+    const [bulkSearch, setBulkSearch] = useState('');
+    const [bulkSearchResults, setBulkSearchResults] = useState<any[]>([]);
+    const [selectedStudents, setSelectedStudents] = useState<any[]>([]);
+    const [bulkForm, setBulkForm] = useState({
+        type: 'MOVEMENT',
+        date: new Date().toISOString().split('T')[0],
+        startTime: '18:00',
+        endTime: '21:00',
+        location: '',
+        reason: ''
+    });
+    const [bulkLoading, setBulkLoading] = useState(false);
+
     useEffect(() => {
         fetchPermissions();
     }, []);
 
-    const fetchPermissions = async () => {
-        setLoading(true);
-        try {
-            // Fetch ALL permissions for this teacher
-            const res = await fetch('/api/teacher/permissions');
-            const data = await res.json();
+    // ... (fetchPermissions existing code)
 
-            setPendingPermissions(data.filter((p: any) => p.status === 'PENDING'));
-            const history = data.filter((p: any) => p.status !== 'PENDING');
-            setHistoryPermissions(history);
-            setFilteredHistory(history);
-        } catch (e) {
-            console.error(e);
-            toast.error("데이터를 불러오는데 실패했습니다.");
-        }
-        setLoading(false);
-    };
+    // Bulk Search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (bulkSearch.trim()) {
+                fetch(`/api/admin/students/search?query=${encodeURIComponent(bulkSearch)}`)
+                    .then(res => res.json())
+                    .then(setBulkSearchResults)
+                    .catch(console.error);
+            } else {
+                setBulkSearchResults([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [bulkSearch]);
 
-    const handleSearch = () => {
-        if (!search.trim()) {
-            setFilteredHistory(historyPermissions);
+    const handleBulkSubmit = async () => {
+        if (selectedStudents.length === 0) {
+            toast.error("학생을 선택해주세요.");
             return;
         }
-        const lower = search.toLowerCase();
-        const filtered = historyPermissions.filter(r =>
-            r.student.name.includes(lower) ||
-            (r.student.grade + '').includes(lower)
-        );
-        setFilteredHistory(filtered);
-    };
+        if (!bulkForm.location || !bulkForm.reason) {
+            toast.error("장소와 사유를 입력해주세요.");
+            return;
+        }
 
-    const handleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
-        setProcessingId(id);
+        setBulkLoading(true);
         try {
-            const res = await fetch(`/api/teacher/permissions/${id}`, {
-                method: 'PATCH',
+            const startStr = `${bulkForm.date}T${bulkForm.startTime}`;
+            const endStr = `${bulkForm.date}T${bulkForm.endTime}`;
+
+            const res = await fetch('/api/teacher/permissions/bulk', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({
+                    studentIds: selectedStudents.map(s => s.id),
+                    type: bulkForm.type,
+                    start: new Date(startStr).toISOString(),
+                    end: new Date(endStr).toISOString(),
+                    reason: bulkForm.reason,
+                    location: bulkForm.location
+                })
             });
+
             if (res.ok) {
-                toast.success(status === 'APPROVED' ? '승인처리 되었습니다.' : '반려처리 되었습니다.');
-                await fetchPermissions();
+                toast.success(`${selectedStudents.length}명의 퍼미션이 등록되었습니다.`);
+                setIsBulkOpen(false);
+                setBulkForm({ ...bulkForm, reason: '', location: '' }); // Reset fields
+                setSelectedStudents([]);
+                fetchPermissions(); // Refresh list
             } else {
-                toast.error("처리에 실패했습니다.");
+                toast.error("일괄 등록에 실패했습니다.");
             }
         } catch (e) {
             console.error(e);
-            toast.error("네트워크 오류가 발생했습니다.");
+            toast.error("오류가 발생했습니다.");
         }
-        setProcessingId(null);
+        setBulkLoading(false);
     };
+
+    const toggleStudent = (student: any) => {
+        if (selectedStudents.find(s => s.id === student.id)) {
+            setSelectedStudents(selectedStudents.filter(s => s.id !== student.id));
+        } else {
+            setSelectedStudents([...selectedStudents, student]);
+        }
+    };
+
+    // ... (existing handleAction, etc.)
 
     if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin w-8 h-8 text-gray-400" /></div>;
 
     return (
         <div className="p-6 space-y-8">
-            {/* 1. Pending Permissions Section */}
-            <div>
-                <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            {/* Header & Bulk Button */}
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold flex items-center gap-2">
                     신규 신청 목록
                     {pendingPermissions.length > 0 && (
                         <Badge variant="destructive" className="rounded-full px-2">
@@ -102,6 +140,115 @@ export default function TeacherPlanPage() {
                         </Badge>
                     )}
                 </h1>
+
+                <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
+                            <Plus className="w-4 h-4" />
+                            일괄 퍼미션 생성
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>일괄 퍼미션 생성 (교사 권한)</DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-6 py-4">
+                            {/* 1. Student Selection */}
+                            <div className="space-y-3 p-4 border rounded-lg bg-gray-50/50">
+                                <Label className="text-base font-semibold">1. 학생 선택 ({selectedStudents.length}명)</Label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        placeholder="이름 검색..."
+                                        className="pl-9 bg-white"
+                                        value={bulkSearch}
+                                        onChange={e => setBulkSearch(e.target.value)}
+                                    />
+                                </div>
+                                {bulkSearchResults.length > 0 && (
+                                    <div className="max-h-40 overflow-y-auto border rounded-md bg-white p-2 space-y-1">
+                                        {bulkSearchResults.map(s => {
+                                            const isSelected = selectedStudents.some(sel => sel.id === s.id);
+                                            return (
+                                                <div
+                                                    key={s.id}
+                                                    className={cn("flex items-center justify-between p-2 rounded cursor-pointer", isSelected ? "bg-green-50 border border-green-200" : "hover:bg-gray-50")}
+                                                    onClick={() => toggleStudent(s)}
+                                                >
+                                                    <span className={cn("text-sm", isSelected && "font-bold text-green-700")}>{s.grade}-{s.class}-{s.number} {s.name}</span>
+                                                    {isSelected && <Check className="w-4 h-4 text-green-600" />}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                                {/* Selected Tags */}
+                                {selectedStudents.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 pt-2">
+                                        {selectedStudents.map(s => (
+                                            <Badge key={s.id} variant="secondary" className="gap-1 bg-white border cursor-pointer hover:bg-red-50" onClick={() => toggleStudent(s)}>
+                                                {s.name} <X className="w-3 h-3" />
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 2. Permission Details */}
+                            <div className="space-y-4 p-4 border rounded-lg bg-white">
+                                <Label className="text-base font-semibold">2. 퍼미션 내용</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>유형</Label>
+                                        <Select value={bulkForm.type} onValueChange={v => setBulkForm({ ...bulkForm, type: v })}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="MOVEMENT">이동</SelectItem>
+                                                <SelectItem value="OUTING">외출</SelectItem>
+                                                <SelectItem value="EARLY_LEAVE">조퇴</SelectItem>
+                                                <SelectItem value="OTHER">기타</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>장소</Label>
+                                        <Input value={bulkForm.location} onChange={e => setBulkForm({ ...bulkForm, location: e.target.value })} placeholder="예: 시청각실" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>날짜</Label>
+                                        <Input type="date" value={bulkForm.date} onChange={e => setBulkForm({ ...bulkForm, date: e.target.value })} />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="space-y-2 flex-1">
+                                            <Label>시작</Label>
+                                            <Input type="time" value={bulkForm.startTime} onChange={e => setBulkForm({ ...bulkForm, startTime: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2 flex-1">
+                                            <Label>종료</Label>
+                                            <Input type="time" value={bulkForm.endTime} onChange={e => setBulkForm({ ...bulkForm, endTime: e.target.value })} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>사유</Label>
+                                    <Input value={bulkForm.reason} onChange={e => setBulkForm({ ...bulkForm, reason: e.target.value })} placeholder="예: 단체 활동" />
+                                </div>
+                            </div>
+
+                            <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleBulkSubmit} disabled={bulkLoading}>
+                                {bulkLoading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+                                {selectedStudents.length}명 일괄 등록 및 승인
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            {/* Pending List (Original) */}
+            <div>
 
                 {pendingPermissions.length === 0 ? (
                     <Card className="bg-gray-50 border-dashed">

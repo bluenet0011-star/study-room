@@ -51,8 +51,10 @@ model Seat {
   label     String   // Display number/text
   type      String   @default("SEAT") // SEAT, WINDOW, DOOR, WALL, EMPTY
   rotation  Int      @default(0)
-  x         Int      // Grid coordinates or absolute position
+  x         Int      // Grid coordinates
   y         Int
+  width     Int      @default(1)
+  height    Int      @default(1)
   active    Boolean  @default(true)
   
   room      Room     @relation(fields: [roomId], references: [id])

@@ -31,3 +31,36 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         return new NextResponse("Error deleting permission", { status: 500 });
     }
 }
+
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await auth();
+    const resolvedParams = await params;
+    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+
+    try {
+        const body = await req.json();
+        const permission = await prisma.permission.findUnique({
+            where: { id: resolvedParams.id }
+        });
+
+        if (!permission) return new NextResponse("Not Found", { status: 404 });
+        if (permission.studentId !== session.user.id) return new NextResponse("Forbidden", { status: 403 });
+        if (permission.status !== 'PENDING') return new NextResponse("Cannot edit processed permission", { status: 400 });
+
+        const updated = await prisma.permission.update({
+            where: { id: resolvedParams.id },
+            data: {
+                type: body.type,
+                start: new Date(body.start),
+                end: new Date(body.end),
+                reason: body.reason,
+                location: body.location,
+                teacherId: body.teacherId
+            }
+        });
+
+        return NextResponse.json(updated);
+    } catch (e) {
+        return new NextResponse("Error updating permission", { status: 500 });
+    }
+}

@@ -127,7 +127,7 @@ export default function NoticePage() {
                                     {notice.important && (
                                         <Badge variant="destructive" className="w-fit text-[10px] mb-1">중요</Badge>
                                     )}
-                                    <h3 className="font-medium text-base line-clamp-2">{notice.title}</h3>
+                                    <h3 className="font-medium text-base truncate pr-2">{notice.title}</h3>
                                 </div>
                                 <span className={cn("text-xs text-gray-400 whitespace-nowrap ml-2", !notice.important && "mt-1")}>
                                     {format(new Date(notice.createdAt), 'MM.dd')}

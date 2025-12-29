@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { User, FileText, Clock, AlertCircle, Check } from 'lucide-react';
+import { User, FileText, Clock, AlertCircle, Check, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -15,6 +15,9 @@ interface Seat {
     label: string;
     x: number;
     y: number;
+    width?: number;
+    height?: number;
+    type?: string;
     status: string; // MOVEMENT, OUTING, OCCUPIED, EMPTY
     student?: {
         id: string;
@@ -43,7 +46,7 @@ const statusMap: Record<string, string> = {
     REJECTED: '반려됨'
 };
 
-const SeatComponent = memo(({ seat, onClick, guidanceMode }: { seat: Seat, onClick: (s: Seat) => void, guidanceMode: boolean }) => {
+const SeatComponent = memo(({ seat, onClick, guidanceMode, style }: { seat: Seat, onClick: (s: Seat) => void, guidanceMode: boolean, style: any }) => {
     const isAssigned = !!seat.student;
 
     // Determine seat color based on status
@@ -60,11 +63,11 @@ const SeatComponent = memo(({ seat, onClick, guidanceMode }: { seat: Seat, onCli
         <div
             onClick={() => onClick(seat)}
             className={cn(
-                "absolute w-16 h-12 rounded-lg border text-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm z-10",
+                "absolute rounded-lg border text-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm z-10",
                 seatColorClass,
                 guidanceMode && isAssigned && "ring-2 ring-red-400 ring-offset-1"
             )}
-            style={{ left: seat.x * 60, top: seat.y * 60 }}
+            style={style}
         >
             <span className="text-[10px] opacity-70 mb-0.5">{seat.label}</span>
             {isAssigned ? (
@@ -97,6 +100,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     const [guidanceMode, setGuidanceMode] = useState(false);
     const [permissions, setPermissions] = useState<any[]>([]); // Student permissions
     const [loadingPerms, setLoadingPerms] = useState(false);
+    const [scale, setScale] = useState(1);
 
     const fetchSeats = useCallback(async (isBackground = false) => {
         if (!isBackground) setIsLoading(true);
@@ -144,40 +148,83 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
             <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
                 <div className="flex items-center gap-4">
                     <h2 className="font-semibold text-lg">좌석 현황</h2>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span className="flex items-center"><div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded mr-1"></div> 배정됨</span>
-                        <span className="flex items-center"><div className="w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></div> 부재중</span>
-                        <span className="flex items-center"><div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded mr-1"></div> 빈좌석</span>
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 whitespace-nowrap overflow-x-auto scrollbar-hide">
+                        <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded mr-1"></div> 배정됨</span>
+                        <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></div> 부재중</span>
+                        <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded mr-1"></div> 빈좌석</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant={guidanceMode ? "destructive" : "outline"}
-                        onClick={() => setGuidanceMode(!guidanceMode)}
-                    >
-                        {guidanceMode ? "지도모드 종료" : "지도모드 시작"}
-                    </Button>
+                    {/* Guidance Mode button removed by user request */}
                 </div>
             </div>
 
-            <div className="relative border bg-white rounded-xl shadow-sm overflow-hidden h-[600px] w-full overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
-                {isLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            <p className="text-sm text-gray-500">좌석 정보를 불러오는 중...</p>
-                        </div>
+            <div className="relative border bg-white rounded-xl shadow-sm overflow-hidden h-[600px] w-full flex flex-col">
+                {/* Zoom Controls Overlay */}
+                <div className="absolute top-4 right-4 z-50 flex gap-2 bg-white/80 p-1 rounded-lg backdrop-blur shadow border">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}><ZoomOut className="h-4 w-4" /></Button>
+                    <span className="flex items-center justify-center text-xs w-8 font-mono">{Math.round(scale * 100)}%</span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.min(2, s + 0.1))}><ZoomIn className="h-4 w-4" /></Button>
+                </div>
+
+                <div className="flex-1 overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] relative cursor-grab active:cursor-grabbing p-10">
+                    <div
+                        className="relative origin-top-left transition-transform duration-200"
+                        style={{ transform: `scale(${scale})`, minWidth: '1000px', minHeight: '1000px' }}
+                    >
+                        {isLoading ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <p className="text-sm text-gray-500">좌석 정보를 불러오는 중...</p>
+                                </div>
+                            </div>
+                        ) : (
+                            seats.map((seat) => {
+                                const isSeat = seat.type === 'SEAT' || !seat.type;
+                                const width = (seat.width || 1) * 30;
+                                const height = (seat.height || 1) * 30;
+                                const left = (seat.x || 0) * 30;
+                                const top = (seat.y || 0) * 30;
+
+                                if (!isSeat) {
+                                    return (
+                                        <div
+                                            key={seat.id}
+                                            className={cn(
+                                                "absolute flex items-center justify-center text-xs select-none z-0",
+                                                seat.type === 'WALL' && "bg-gray-800 border-2 border-gray-900",
+                                                seat.type === 'WINDOW' && "bg-blue-200 border-2 border-blue-400",
+                                                seat.type === 'DOOR' && "bg-amber-800/20 border-2 border-amber-800 rounded-sm"
+                                            )}
+                                            style={{ left, top, width, height }}
+                                        >
+                                            {seat.type === 'WINDOW' && <div className="w-full h-1 bg-blue-400/50" />}
+                                            {seat.type === 'DOOR' && <div className="w-1/2 h-full border-r-2 border-dashed border-amber-800/50" />}
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <SeatComponent
+                                        key={seat.id}
+                                        seat={{ ...seat, width, height, x: left / 60, y: top / 60 }} // Pass specialized props or just pass style? SeatComponent expects seat object.
+                                        // Actually SeatComponent calculates style internaly using x*60. We need to Override or Update SeatComponent.
+                                        // Let's refactor SeatComponent usage inline or update it. 
+                                        // Updating SeatComponent is better for clean code.
+                                        // For now, I will modify SeatComponent to accept style or just render it here since it's getting complex?
+                                        // Let's modify SeatComponent (below this block) or just refactor this loop to render direct div like SeatAssigner.
+                                        // Direct rendering is easier to handle scale/width changes right now.
+                                        onClick={handleSeatClick}
+                                        guidanceMode={guidanceMode}
+                                        // Extra props for render
+                                        style={{ left, top, width, height }}
+                                    />
+                                );
+                            })
+                        )}
                     </div>
-                ) : (
-                    seats.map((seat) => (
-                        <SeatComponent
-                            key={seat.id}
-                            seat={seat}
-                            onClick={handleSeatClick}
-                            guidanceMode={guidanceMode}
-                        />
-                    ))
-                )}
+                </div>
             </div>
 
             <Dialog open={!!selectedSeat} onOpenChange={(o) => !o && setSelectedSeat(null)}>

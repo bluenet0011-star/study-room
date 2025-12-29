@@ -49,7 +49,7 @@ export default async function DashboardContent() {
                                 <CardTitle className="text-xl font-semibold group-hover:text-primary transition-colors">
                                     {link.name}
                                 </CardTitle>
-                                <link.icon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <link.icon className="h-6 w-6 text-red-500 group-hover:text-primary transition-colors" />
                             </CardHeader>
                             <CardContent>
                                 <CardDescription className="text-sm mt-2 line-clamp-2">

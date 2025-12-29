@@ -63,11 +63,11 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
 
     return (
         <div className="overflow-x-auto">
-            <div className="min-w-[600px] border rounded-lg bg-white shadow-sm">
-                <div className="grid grid-cols-6 bg-gray-50 border-b text-center text-sm font-medium text-gray-700 divide-x">
-                    <div className="p-3 bg-gray-100">교시</div>
+            <div className="w-full md:min-w-[600px] border rounded-lg bg-white shadow-sm">
+                <div className="grid grid-cols-6 bg-gray-50 border-b text-center text-xs md:text-sm font-medium text-gray-700 divide-x">
+                    <div className="p-2 md:p-3 bg-gray-100">교시</div>
                     {weekdays.map((day, i) => (
-                        <div key={day} className={`p-3 ${currentDay === i + 1 ? 'bg-blue-50 text-blue-700 font-bold' : ''}`}>
+                        <div key={day} className={`p-2 md:p-3 ${currentDay === i + 1 ? 'bg-blue-50 text-blue-700 font-bold' : ''}`}>
                             {day}
                         </div>
                     ))}
@@ -75,9 +75,9 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
 
                 <div className="divide-y">
                     {periods.map((period, pIdx) => (
-                        <div key={period} className="grid grid-cols-6 text-center text-sm divide-x hover:bg-gray-50/50 transition-colors">
-                            <div className="p-3 bg-gray-50 font-medium text-gray-500 flex items-center justify-center">
-                                {period}교시
+                        <div key={period} className="grid grid-cols-6 text-center text-xs md:text-sm divide-x hover:bg-gray-50/50 transition-colors">
+                            <div className="p-2 md:p-3 bg-gray-50 font-medium text-gray-500 flex items-center justify-center">
+                                {period}
                             </div>
                             {weekdays.map((_, dIdx) => {
                                 const dayData = timetable[dIdx + 1]; // 1-based index (1=Mon)
@@ -87,15 +87,13 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
                                 if (typeof rawSubject === 'string') {
                                     displaySubject = rawSubject;
                                 } else if (typeof rawSubject === 'object' && rawSubject !== null) {
-                                    // Handle object case (comcigan-parser might return objects)
-                                    // Common structure: { grade, class, subject, teacher ... }
-                                    displaySubject = rawSubject.subject || '';
+                                    displaySubject = rawSubject.subject || rawSubject.name || ''; // Changed to check name potentially
                                 }
 
                                 return (
-                                    <div key={dIdx} className={`p-3 flex items-center justify-center min-h-[60px] ${currentDay === dIdx + 1 ? 'bg-blue-50/30' : ''}`}>
+                                    <div key={dIdx} className={`p-1 md:p-3 flex items-center justify-center min-h-[50px] md:min-h-[60px] ${currentDay === dIdx + 1 ? 'bg-blue-50/30' : ''}`}>
                                         {displaySubject ? (
-                                            <span className="font-medium text-gray-800 break-keep text-sm">
+                                            <span className="font-medium text-gray-800 break-keep text-[10px] md:text-sm leading-tight">
                                                 {displaySubject}
                                             </span>
                                         ) : (

@@ -21,12 +21,17 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [copyBuffer, setCopyBuffer] = useState<any[]>([]);
 
+    // Drawing Mode
+    const [drawMode, setDrawMode] = useState<'NONE' | 'WALL'>('NONE');
+    const [drawStart, setDrawStart] = useState<{ x: number, y: number } | null>(null);
+    const [drawPreview, setDrawPreview] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+
     // Label Editing State
     const [editingSeatId, setEditingSeatId] = useState<string | null>(null);
     const [editLabel, setEditLabel] = useState('');
 
     // Grid size
-    const gridSize = 30; // Reduced to 30px
+    const gridSize = 30;
     const snapToGrid = createSnapModifier(gridSize);
 
     const sensors = useSensors(
@@ -42,7 +47,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
         fetch(`/api/admin/rooms/${roomId}/seats`)
             .then(res => res.json())
             .then(data => {
-                setSeats(data);
+                setSeats(data.map((s: any) => ({ ...s, width: s.width || 1, height: s.height || 1 })));
                 setLoading(false);
             });
     }, [roomId]);
@@ -59,7 +64,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                 ? selectedIds
                 : [active.id as string];
 
-            // Calculate potential new positions
             const newSeats = prev.map(seat => {
                 if (movingIds.includes(seat.id)) {
                     return { ...seat, x: seat.x + dx, y: seat.y + dy };
@@ -67,22 +71,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                 return seat;
             });
 
-            // Collision Detection
-            const movingSeats = newSeats.filter(s => movingIds.includes(s.id));
-            const staticSeats = newSeats.filter(s => !movingIds.includes(s.id));
-
-            for (const moving of movingSeats) {
-                // Check if overlapping with any static seat
-                const isOverlap = staticSeats.some(staticS =>
-                    staticS.x === moving.x && staticS.y === moving.y
-                );
-                // Also check negative coordinates
-                if (isOverlap || moving.x < 0 || moving.y < 0) {
-                    // toast.warning("충돌 또는 벗어남 감지");
-                    return prev; // Revert
-                }
-            }
-
+            // Basic bounds check (optional)
             return newSeats;
         });
     };
@@ -97,7 +86,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
             });
             if (res.ok) {
                 toast.success("배치가 성공적으로 저장되었습니다.");
-                // Update seats to get real IDs if needed, but not strictly required if optimistically updated
             } else {
                 toast.error("저장 중 오류가 발생했습니다.");
             }
@@ -109,38 +97,78 @@ export function SeatEditor({ roomId }: { roomId: string }) {
 
     const getNextLabel = (currentSeats: any[]) => {
         const numbers = currentSeats
+            .filter(s => s.type === 'SEAT')
             .map(s => parseInt(s.label))
             .filter(n => !isNaN(n));
         const max = numbers.length > 0 ? Math.max(...numbers) : 0;
         return (max + 1).toString();
     };
 
-    const addNode = (type: string = 'SEAT') => {
+    const addNode = (type: string) => {
+        // Normal add node (1x1)
         const id = `new-${Date.now()}`;
         let label = '';
-        if (type === 'SEAT') {
-            label = getNextLabel(seats);
-        } else if (type === 'SEAT') {
-            // Fallback or other logic if needed, but keeping it simple as per request
-            label = `${seats.filter(s => s.type !== 'WINDOW' && s.type !== 'DOOR' && s.type !== 'WALL').length + 1}`;
-        }
+        if (type === 'SEAT') label = getNextLabel(seats);
 
-        // Find first empty spot
-        // Simple heuristic: 0,0 then scan
-        // For now just 0,0
         setSeats(prev => [...prev, {
-            id,
-            x: 0,
-            y: 0,
-            label,
-            type,
-            rotation: 0,
-            isNew: true
+            id, x: 0, y: 0, width: 1, height: 1, label, type, rotation: 0, isNew: true
         }]);
     };
 
+    // Drawing Logic
+    const handleCanvasMouseDown = (e: React.MouseEvent) => {
+        if (drawMode === 'WALL') {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Calculate relative x, y in grid units
+            const x = Math.floor((e.clientX - rect.left) / (gridSize * scale));
+            const y = Math.floor((e.clientY - rect.top) / (gridSize * scale));
+            setDrawStart({ x, y });
+            setDrawPreview({ x, y, w: 1, h: 1 });
+        } else {
+            // Deselect on bg click
+            setSelectedIds([]);
+        }
+    };
+
+    const handleCanvasMouseMove = (e: React.MouseEvent) => {
+        if (drawMode === 'WALL' && drawStart) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const currentX = Math.floor((e.clientX - rect.left) / (gridSize * scale));
+            const currentY = Math.floor((e.clientY - rect.top) / (gridSize * scale));
+
+            const w = Math.abs(currentX - drawStart.x) + 1;
+            const h = Math.abs(currentY - drawStart.y) + 1;
+            const x = Math.min(currentX, drawStart.x);
+            const y = Math.min(currentY, drawStart.y);
+
+            setDrawPreview({ x, y, w, h });
+        }
+    };
+
+    const handleCanvasMouseUp = () => {
+        if (drawMode === 'WALL' && drawStart && drawPreview) {
+            // Create Wall
+            const id = `wall-${Date.now()}`;
+            setSeats(prev => [...prev, {
+                id,
+                x: drawPreview.x,
+                y: drawPreview.y,
+                width: drawPreview.w,
+                height: drawPreview.h,
+                label: '',
+                type: 'WALL',
+                rotation: 0,
+                isNew: true
+            }]);
+            setDrawStart(null);
+            setDrawPreview(null);
+            setDrawMode('NONE'); // Exit draw mode after one wall? Or keep? Let's keep for utility or exit. User says "Drag Rectangle". Usually implies one-off or tool toggle. Let's toggle off for safety.
+        }
+    };
+
+
     const handleSeatClick = (id: string, e: React.MouseEvent) => {
-        if (e.ctrlKey || e.metaKey) {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
             setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
         } else {
             setSelectedIds([id]);
@@ -160,10 +188,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
         setEditingSeatId(null);
     };
 
-    const handleBackgroundClick = () => {
-        setSelectedIds([]);
-    };
-
     const deleteSelected = () => {
         setSeats(prev => prev.filter(s => !selectedIds.includes(s.id)));
         setSelectedIds([]);
@@ -172,12 +196,9 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Delete
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 if (selectedIds.length > 0 && !editingSeatId) deleteSelected();
             }
-
-            // Copy (Ctrl+C)
             if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !editingSeatId) {
                 if (selectedIds.length > 0) {
                     const selectedSeats = seats.filter(s => selectedIds.includes(s.id));
@@ -185,40 +206,20 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                     toast.info(`${selectedSeats.length}개 복사됨`);
                 }
             }
-
-            // Paste (Ctrl+V)
-            if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !editingSeatId) {
-                if (copyBuffer.length > 0) {
-                    const offset = 1;
-
-                    setSeats(prev => {
-                        let nextLabelNum = parseInt(getNextLabel(prev));
-
-                        const newSeats = copyBuffer.map((s, idx) => {
-                            const newId = `copy-${Date.now()}-${idx}`;
-                            let newLabel = s.label;
-
-                            // Auto-increment label on paste if it represents a number
-                            if (s.type === 'SEAT') {
-                                newLabel = (nextLabelNum++).toString();
-                            }
-
-                            return {
-                                ...s,
-                                id: newId,
-                                x: s.x + offset,
-                                y: s.y + offset,
-                                label: newLabel,
-                                isNew: true
-                            };
-                        });
-
-                        setTimeout(() => setSelectedIds(newSeats.map(s => s.id)), 0);
-
-                        return [...prev, ...newSeats];
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !editingSeatId && copyBuffer.length > 0) {
+                const offset = 1;
+                setSeats(prev => {
+                    let nextLabelNum = parseInt(getNextLabel(prev));
+                    const newSeats = copyBuffer.map((s, idx) => {
+                        const newId = `copy-${Date.now()}-${idx}`;
+                        let newLabel = s.label;
+                        if (s.type === 'SEAT') newLabel = (nextLabelNum++).toString();
+                        return { ...s, id: newId, x: s.x + offset, y: s.y + offset, label: newLabel, isNew: true };
                     });
-                    toast.success("붙여넣기 완료");
-                }
+                    setTimeout(() => setSelectedIds(newSeats.map(s => s.id)), 0);
+                    return [...prev, ...newSeats];
+                });
+                toast.success("붙여넣기 완료");
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -237,12 +238,19 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                     <Button variant="outline" size="sm" onClick={() => addNode('SEAT')}><Square className="mr-2 h-4 w-4" />좌석</Button>
                     <Button variant="outline" size="sm" onClick={() => addNode('WINDOW')}><Box className="mr-2 h-4 w-4" />창문</Button>
                     <Button variant="outline" size="sm" onClick={() => addNode('DOOR')}><DoorOpen className="mr-2 h-4 w-4" />문</Button>
-                    <Button variant="outline" size="sm" onClick={() => addNode('WALL')}><Maximize className="mr-2 h-4 w-4" />벽</Button>
+
+                    <Button
+                        variant={drawMode === 'WALL' ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setDrawMode(drawMode === 'WALL' ? 'NONE' : 'WALL')}
+                    >
+                        <Maximize className="mr-2 h-4 w-4" />벽 그리기
+                    </Button>
 
                     <div className="h-6 w-px bg-gray-200 mx-2" />
                     <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.2, s - 0.1))}><ZoomOut className="h-4 w-4" /></Button>
                     <span className="text-xs w-10 text-center">{Math.round(scale * 100)}%</span>
-                    <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(2, s + 0.1))}><ZoomIn className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(4, s + 0.1))}><ZoomIn className="h-4 w-4" /></Button>
                 </div>
                 <div className="flex gap-2">
                     {selectedIds.length > 0 && (
@@ -255,12 +263,17 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                 </div>
             </div>
 
-            <div className="border bg-gray-50 flex-1 relative overflow-hidden rounded-lg shadow-inner" onClick={handleBackgroundClick}>
+            <div
+                className={cn("border bg-gray-50 flex-1 relative overflow-hidden rounded-lg shadow-inner", drawMode === 'WALL' && "cursor-crosshair")}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
+            >
                 <div
                     className="absolute inset-0 transition-transform origin-top-left"
                     style={{
                         transform: `scale(${scale})`,
-                        width: '10000px', // Large canvas area
+                        width: '10000px',
                         height: '10000px',
                         backgroundImage: 'radial-gradient(circle, #ddd 2px, transparent 2px)',
                         backgroundSize: `${gridSize}px ${gridSize}px`
@@ -270,8 +283,9 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                         sensors={sensors}
                         onDragEnd={handleDragEnd}
                         onDragStart={(e) => {
+                            if (drawMode === 'WALL') return; // Disable drag while drawing
                             if (!selectedIds.includes(e.active.id as string)) {
-                                if (!e.active.data.current?.nativeEvent?.ctrlKey) { // This might not pass through easily
+                                if (!e.active.data.current?.nativeEvent?.shiftKey && !e.active.data.current?.nativeEvent?.ctrlKey) {
                                     setSelectedIds([e.active.id as string]);
                                 }
                             }
@@ -282,9 +296,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                             <div
                                 key={seat.id}
                                 onClick={(e) => { e.stopPropagation(); handleSeatClick(seat.id, e); }}
-                                className="absolute" // Wrapper for click handling if Draggable consumes it?
-                            // Actually better to handle selection inside draggable or overlay?
-                            // dnd-kit draggable consumes mouse events.
+                                className="absolute"
                             >
                                 <DraggableSeat
                                     {...seat}
@@ -294,11 +306,29 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                             </div>
                         ))}
                     </DndContext>
+
+                    {/* Draw Preview */}
+                    {drawPreview && (
+                        <div
+                            className="absolute border-2 border-gray-900 bg-gray-800/50 z-50 pointer-events-none"
+                            style={{
+                                left: drawPreview.x * gridSize,
+                                top: drawPreview.y * gridSize,
+                                width: drawPreview.w * gridSize,
+                                height: drawPreview.h * gridSize,
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 
-            <div className="text-xs text-gray-400 text-right">
-                Ctrl+C/V 복붙 (자동 번호) | 더블클릭 번호수정 | Ctrl+Click 다중 선택 | Delete 삭제
+            <div className="text-xs text-gray-400 text-right flex justify-between px-2">
+                <span>
+                    {drawMode === 'WALL' ? "드래그하여 벽을 생성하세요." : "팁: Shift+Click 다중 선택 | 드래그하여 이동 | Ctrl+C/V 복사/붙여넣기"}
+                </span>
+                <span>
+                    더블클릭: 수정 | Delete: 삭제
+                </span>
             </div>
 
             <Dialog open={!!editingSeatId} onOpenChange={(open) => !open && setEditingSeatId(null)}>

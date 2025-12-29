@@ -15,6 +15,9 @@ interface Seat {
     label: string;
     x: number;
     y: number;
+    width?: number;
+    height?: number;
+    type?: string;
     status: string;
     student?: {
         id: string;
@@ -122,33 +125,62 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                 <ExcelBulkAssign roomId={roomId} onUpdate={() => fetchSeats(true)} />
             </div>
             <div className="border bg-gray-50 relative overflow-auto h-[600px] rounded-lg shadow-inner p-4">
-                {seats.map(seat => (
-                    <div
-                        key={seat.id}
-                        className={`absolute w-12 h-12 flex flex-col items-center justify-center rounded-md border text-[10px] cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm
-                            ${seat.status === 'MOVEMENT' ? 'bg-red-100 border-red-400 text-red-800' :
-                                seat.status === 'OUTING' ? 'bg-red-100 border-red-400 text-red-800' :
-                                    seat.student ? 'bg-blue-100 border-blue-400 text-blue-800' : 'bg-white border-gray-300'}
-                        `}
-                        style={{ left: (seat.x || 0) * 60, top: (seat.y || 0) * 60 }}
-                        onClick={() => {
-                            setSelectedSeat(seat);
-                            setSearchQuery('');
-                            setSearchResults([]);
-                        }}
-                    >
-                        <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden">
-                            <span className="font-bold shrink-0">{seat.label}</span>
-                            {seat.student && (
-                                <span className="truncate w-full text-center px-0.5 font-medium leading-tight">
-                                    {seat.student.name}
-                                    {seat.status === 'MOVEMENT' && <span className="block text-[8px] text-yellow-700">이동</span>}
-                                    {seat.status === 'OUTING' && <span className="block text-[8px] text-orange-700">외출</span>}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                <div className="relative min-w-[800px] min-h-[600px]">
+                    {seats.map(seat => {
+                        const isSeat = seat.type === 'SEAT' || !seat.type; // Default to SEAT if undefined
+                        const width = (seat.width || 1) * 30; // 30px grid
+                        const height = (seat.height || 1) * 30;
+                        const left = (seat.x || 0) * 30;
+                        const top = (seat.y || 0) * 30;
+
+                        if (!isSeat) {
+                            // Render non-seat items
+                            return (
+                                <div
+                                    key={seat.id}
+                                    className={`absolute flex items-center justify-center text-xs select-none
+                                        ${seat.type === 'WALL' ? 'bg-gray-800 border-2 border-gray-900 z-0' :
+                                            seat.type === 'WINDOW' ? 'bg-blue-200 border-2 border-blue-400 z-0' :
+                                                seat.type === 'DOOR' ? 'bg-amber-800/20 border-2 border-amber-800 rounded-sm z-0' : ''}
+                                    `}
+                                    style={{ left, top, width, height }}
+                                >
+                                    {seat.type === 'WINDOW' && <div className="w-full h-1 bg-blue-400/50" />}
+                                    {seat.type === 'DOOR' && <div className="w-1/2 h-full border-r-2 border-dashed border-amber-800/50" />}
+                                </div>
+                            );
+                        }
+
+                        // Render Seat
+                        return (
+                            <div
+                                key={seat.id}
+                                className={`absolute flex flex-col items-center justify-center rounded-md border text-[10px] cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm z-10
+                                    ${seat.status === 'MOVEMENT' ? 'bg-red-100 border-red-400 text-red-800' :
+                                        seat.status === 'OUTING' ? 'bg-red-100 border-red-400 text-red-800' :
+                                            seat.student ? 'bg-blue-100 border-blue-400 text-blue-800' : 'bg-white border-gray-300'}
+                                `}
+                                style={{ left, top, width, height }}
+                                onClick={() => {
+                                    setSelectedSeat(seat);
+                                    setSearchQuery('');
+                                    setSearchResults([]);
+                                }}
+                            >
+                                <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden">
+                                    <span className="font-bold shrink-0">{seat.label}</span>
+                                    {seat.student && (
+                                        <span className="truncate w-full text-center px-0.5 font-medium leading-tight">
+                                            {seat.student.name}
+                                            {seat.status === 'MOVEMENT' && <span className="block text-[8px] text-yellow-700">이동</span>}
+                                            {seat.status === 'OUTING' && <span className="block text-[8px] text-orange-700">외출</span>}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             <Dialog open={!!selectedSeat} onOpenChange={() => setSelectedSeat(null)}>
