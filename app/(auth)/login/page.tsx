@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Bug } from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, Bug, GraduationCap } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -76,17 +75,9 @@ function LoginForm() {
                     </DropdownMenu>
                 </div>
 
-                <div className="flex flex-col items-center mb-8">
-                    <Image
-                        src="/logo.png"
-                        alt="Logo"
-                        width={120}
-                        height={120}
-                        className="mb-4 object-contain"
-                        priority
-                    />
-                    <h1 className="text-2xl font-bold text-red-600">DGHS</h1>
-                    <p className="text-gray-500 text-sm mt-1">학습 관리 시스템</p>
+                <div className="flex flex-col items-center mb-10">
+                    <h1 className="text-5xl font-black text-red-600 mb-2 tracking-tight">DGHS</h1>
+                    <p className="text-gray-500 text-base font-medium">학습 관리 시스템</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

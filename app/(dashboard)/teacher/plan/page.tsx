@@ -133,7 +133,7 @@ export default function TeacherPlanPage() {
                                         </div>
                                         <div className="flex gap-2">
                                             <Button
-                                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                                className="flex-1 bg-blue-600 hover:bg-blue-700 h-9 text-sm"
                                                 onClick={() => handleAction(record.id, 'APPROVED')}
                                                 disabled={!!processingId}
                                             >
@@ -141,7 +141,7 @@ export default function TeacherPlanPage() {
                                             </Button>
                                             <Button
                                                 variant="outline"
-                                                className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                                                className="flex-1 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 h-9 text-sm"
                                                 onClick={() => handleAction(record.id, 'REJECTED')}
                                                 disabled={!!processingId}
                                             >
