@@ -166,6 +166,19 @@ model Event {
   updatedAt DateTime @updatedAt
   
   attendances EventAttendance[]
+  targets     EventTarget[]
+}
+
+model EventTarget {
+  id        String   @id @default(cuid())
+  eventId   String
+  name      String
+  studentId String
+  createdAt DateTime @default(now())
+
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentId])
 }
 
 model EventAttendance {

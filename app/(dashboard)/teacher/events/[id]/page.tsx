@@ -30,16 +30,16 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
             const html5QrCode = new Html5Qrcode("reader");
             scannerRef.current = html5QrCode;
 
-            const config = { 
-                fps: 10, 
+            const config = {
+                fps: 10,
                 qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0 
+                aspectRatio: 1.0
             };
-            
+
             // Auto start with environment camera
             html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
+                { facingMode: "environment" },
+                config,
                 (decodedText: string) => {
                     handleScanInput(decodedText);
                 },
@@ -65,19 +65,19 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
 
     const toggleCamera = () => {
         if (!scannerRef.current || !isScannerRunning) return;
-        
+
         const nextUseFront = !useFrontCamera;
         setUseFrontCamera(nextUseFront);
 
         scannerRef.current.stop().then(() => {
             const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
             const cameraConfig = nextUseFront ? { facingMode: "user" } : { facingMode: "environment" };
-            
+
             return scannerRef.current.start(
                 cameraConfig,
                 config,
                 (decodedText: string) => handleScanInput(decodedText),
-                (err: any) => {}
+                (err: any) => { }
             );
         }).then(() => {
             setIsScannerRunning(true);
@@ -88,13 +88,19 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
     };
 
     const handleScanInput = (text: string) => {
+        let name = '';
+        let studentId = '';
+
         try {
             const data = JSON.parse(text);
-            addAttendee(data.name, data.id);
+            name = data.name;
+            studentId = data.id;
         } catch {
-            addAttendee(`학번 ${text}`, text);
+            name = `학번 ${text}`;
+            studentId = text;
         }
-        toast.success('스캔 성공!');
+
+        addAttendee(name, studentId);
     };
 
     const handleScan = (e: React.FormEvent) => {
@@ -102,14 +108,22 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
         if (!scanInput) return;
         handleScanInput(scanInput);
         setScanInput('');
+        // Keep focus on input for continuous scanning if utilizing a handheld scanner acting as keyboard
+        inputRef.current?.focus();
     };
 
     const addAttendee = (name: string, studentId: string) => {
         setAttendees(prev => {
-             // 3초 이내 중복 스캔 방지
-            if (prev.length > 0 && prev[0].studentId === studentId && (Date.now() - prev[0].id) < 3000) {
+            // Check if student is already in the list
+            const exists = prev.some(p => p.studentId === studentId);
+            if (exists) {
+                // Optional: Show a different toast or just ignore silently to avoid noise
+                // toast.info(`${name} 학생은 이미 출석했습니다.`);
                 return prev;
             }
+
+            // If not duplicate, add and show unique success toast
+            toast.success(`${name} 출석 완료!`);
             return [{
                 id: Date.now(),
                 name,
@@ -134,14 +148,14 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
                 {/* Input Area */}
                 <Card className="flex flex-col justify-center items-center p-8 border-2 border-primary/20 bg-blue-50/30 overflow-hidden">
-                    
+
                     <div className="relative mb-6 rounded-lg overflow-hidden shadow-lg bg-black">
                         <div id="reader" className="w-[300px] h-[300px]"></div>
                         {isScannerRunning && (
-                            <Button 
-                                type="button" 
-                                variant="secondary" 
-                                size="sm" 
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 className="absolute bottom-2 right-2 z-10 opacity-90 text-xs h-8"
                                 onClick={toggleCamera}
                             >

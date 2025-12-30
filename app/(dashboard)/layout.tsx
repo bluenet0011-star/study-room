@@ -15,7 +15,7 @@ export default async function DashboardLayout({
     return (
         <div className="grid min-h-[100dvh] w-full lg:grid-cols-[280px_1fr]">
             {/* Desktop Sidebar */}
-            <div className="hidden border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
+            <div className="hidden border-r bg-gray-100/40 lg:block dark:bg-gray-800/40 sticky top-0 h-screen overflow-y-auto">
                 <SideNav role={session.user.role} />
             </div>
 

@@ -32,7 +32,10 @@ export async function GET(req: Request) {
         prisma.notice.count({ where })
     ]);
 
-    return NextResponse.json({ notices, total, pages: Math.ceil(total / limit) });
+    return NextResponse.json(
+        { notices, total, pages: Math.ceil(total / limit) },
+        { headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate' } }
+    );
 }
 
 export async function POST(req: Request) {

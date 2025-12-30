@@ -52,10 +52,14 @@ export async function POST(req: Request) {
         try {
             // Try DB
             // @ts-ignore
+            // @ts-ignore
             const event = await prisma.event.create({
                 data: {
                     title: body.title,
-                    date: new Date()
+                    date: new Date(),
+                    targets: {
+                        create: body.targets || []
+                    }
                 }
             });
             return NextResponse.json(event);
