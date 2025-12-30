@@ -43,14 +43,14 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { title, content, important, attachments } = body;
+        const { title, content, important, link } = body;
 
         const notice = await prisma.notice.create({
             data: {
                 title,
                 content,
                 important,
-                attachments: attachments || [],
+                link,
                 authorId: session.user.id,
             }
         });

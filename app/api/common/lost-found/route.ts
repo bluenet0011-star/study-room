@@ -2,9 +2,22 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
+        const { searchParams } = new URL(req.url);
+        const search = searchParams.get('q') || '';
+
+        const where = search ? {
+            OR: [
+                { title: { contains: search, mode: 'insensitive' as const } },
+                { content: { contains: search, mode: 'insensitive' as const } },
+                { location: { contains: search, mode: 'insensitive' as const } },
+                { keeper: { contains: search, mode: 'insensitive' as const } }
+            ]
+        } : {};
+
         const items = await prisma.lostItem.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
             include: {
                 author: {
@@ -27,16 +40,16 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { title, content, location, imagePath } = body;
+        const { title, content, location, keeper, status } = body;
 
         const newItem = await prisma.lostItem.create({
             data: {
                 title,
                 content,
                 location,
-                imagePath,
+                keeper,
+                status: status || 'LOST',
                 authorId: session.user.id,
-                status: 'LOST'
             },
             include: {
                 author: {

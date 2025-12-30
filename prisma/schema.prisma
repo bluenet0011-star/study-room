@@ -120,6 +120,7 @@ model Notice {
   authorId  String
   target    String?
   important Boolean  @default(false)
+  link      String?
   attachments String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -147,6 +148,7 @@ model LostItem {
   content   String
   imagePath String?
   location  String?
+  keeper    String?
   status    String   @default("LOST") // LOST, FOUND
   authorId  String
   createdAt DateTime @default(now())

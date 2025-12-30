@@ -1,4 +1,3 @@
-
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -8,51 +7,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { LinkIcon } from 'lucide-react';
 
 export default function NoticeWritePage() {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [link, setLink] = useState('');
     const [important, setImportant] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [attachments, setAttachments] = useState<string[]>([]);
-    const [uploading, setUploading] = useState(false);
     const router = useRouter();
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const files = Array.from(e.target.files);
-            setUploading(true);
-
-            for (const file of files) {
-                if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                    toast.error(`${file.name}: 용량이 10MB를 초과하여 제외되었습니다.`);
-                    continue;
-                }
-
-                const formData = new FormData();
-                formData.append('file', file);
-
-                try {
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData,
-                    });
-
-                    if (!res.ok) throw new Error('Upload failed');
-
-                    const data = await res.json();
-                    setAttachments(prev => [...prev, data.url]);
-                    toast.success(`${file.name} 업로드 완료`);
-                } catch (err) {
-                    console.error(err);
-                    toast.error(`${file.name} 업로드 실패`);
-                }
-            }
-            setUploading(false);
-            // Clear input
-            e.target.value = '';
-        }
-    };
 
     const handleSubmit = async () => {
         if (!title.trim() || !content.trim()) {
@@ -65,7 +28,7 @@ export default function NoticeWritePage() {
             const res = await fetch('/api/notices', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, important, attachments })
+                body: JSON.stringify({ title, content, important, link })
             });
 
             if (res.ok) {
@@ -97,45 +60,17 @@ export default function NoticeWritePage() {
                     />
                 </div>
 
-                <div className="flex flex-col gap-4 border p-4 rounded-lg bg-gray-50">
-                    <div className="flex items-center gap-4">
-                        <Label className="w-20">첨부파일</Label>
-                        <div className="flex-1 flex items-center gap-2">
-                            {/* Native input for iOS compatibility */}
-                            <input
-                                type="file"
-                                multiple
-                                accept="*/*"
-                                onChange={handleFileChange}
-                                disabled={uploading}
-                                className="w-full max-w-sm text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                            />
-                            <span className="text-xs text-gray-400">최대 10MB</span>
-                        </div>
+                <div className="space-y-2">
+                    <Label>관련 링크 (선택)</Label>
+                    <div className="relative">
+                        <LinkIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                        <Input
+                            placeholder="https://example.com"
+                            className="pl-9"
+                            value={link}
+                            onChange={e => setLink(e.target.value)}
+                        />
                     </div>
-                    {uploading && <div className="text-sm text-blue-500 pl-24">파일 업로드 중...</div>}
-                    {attachments.length > 0 && (
-                        <div className="pl-24 flex flex-col gap-2">
-                            {attachments.map((file, idx) => (
-                                <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border text-sm">
-                                    <span className="truncate max-w-[300px]">
-                                        <a href={file} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                            {file.split('/').pop()}
-                                        </a>
-                                    </span>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 w-6 p-0 text-red-500"
-                                        onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
-                                    >
-                                        ✕
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -149,6 +84,9 @@ export default function NoticeWritePage() {
 
                 <div className="space-y-2">
                     <Label>내용</Label>
+                    <div className="text-xs text-muted-foreground mb-1">
+                        * 내용에 포함된 인터넷 주소(URL)는 자동으로 클릭 가능한 링크로 변환됩니다.
+                    </div>
                     <Textarea
                         placeholder="내용을 입력하세요"
                         className="min-h-[300px]"
@@ -159,7 +97,7 @@ export default function NoticeWritePage() {
 
                 <div className="flex justify-end gap-2 pt-4">
                     <Button variant="outline" onClick={() => router.back()} disabled={submitting}>취소</Button>
-                    <Button onClick={handleSubmit} disabled={submitting || uploading} className="bg-blue-600 hover:bg-blue-700">등록</Button>
+                    <Button onClick={handleSubmit} disabled={submitting} className="bg-blue-600 hover:bg-blue-700">등록</Button>
                 </div>
             </div>
         </div>

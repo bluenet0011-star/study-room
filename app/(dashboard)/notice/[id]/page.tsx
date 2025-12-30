@@ -3,7 +3,7 @@ import { useState, useEffect, use } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 
@@ -12,10 +12,9 @@ interface Notice {
     title: string;
     content: string;
     author: { name: string };
-    attachments: string[];
+    link?: string;
     createdAt: string;
 }
-
 
 export default function NoticeDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { data: session } = useSession();
@@ -44,6 +43,23 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
         } catch (e) { toast.error("오류 발생"); }
     };
 
+    // Helper to auto-linkify text
+    const renderContent = (text: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const parts = text.split(urlRegex);
+
+        return parts.map((part, i) => {
+            if (part.match(urlRegex)) {
+                return (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                        {part}
+                    </a>
+                );
+            }
+            return part;
+        });
+    };
+
     if (!notice) return <div className="p-20 text-center">Loading...</div>;
 
     return (
@@ -61,8 +77,6 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                             <span>작성자: <span className="text-gray-900 font-medium">{notice.author.name}</span></span>
                             <span>등록일: {format(new Date(notice.createdAt), 'yyyy-MM-dd HH:mm')}</span>
                         </div>
-                        {/* TODO: Check if user is author or admin - Currently allowing Admin/Teacher */}
-                        {/* Note: Ideally we should check authorId, but for now robust role check is sufficient for this school context */}
                         {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TEACHER') && (
                             <Button variant="ghost" size="sm" onClick={handleDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -71,35 +85,28 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
                         )}
                     </div>
                 </div>
-                <div className="p-8 whitespace-pre-wrap text-gray-700 leading-relaxed text-base min-h-[300px]">
-                    {notice.content}
-                </div>
 
-                {notice.attachments && notice.attachments.length > 0 && (
-                    <div className="border-t bg-gray-50/50 p-6">
-                        <h3 className="text-sm font-medium text-gray-500 mb-3">첨부파일</h3>
-                        <div className="flex flex-col gap-2">
-                            {notice.attachments.map((file, idx) => (
-                                <a
-                                    key={idx}
-                                    href={file}
-                                    download
-                                    className="flex items-center gap-3 p-3 bg-white border rounded hover:bg-gray-50 transition-colors group"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    <div className="bg-blue-50 p-2 rounded text-blue-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
-                                    </div>
-                                    <span className="text-sm text-gray-700 group-hover:text-blue-700 font-medium">
-                                        {file.startsWith('data:') ? `첨부파일 ${idx + 1} (다운로드)` : file.split('/').pop()}
-                                    </span>
-                                    <span className="text-xs text-gray-400 ml-auto">다운로드</span>
+                <div className="p-8">
+                    {notice.link && (
+                        <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between">
+                            <div className="flex flex-col gap-1 overflow-hidden">
+                                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Related Link</span>
+                                <a href={notice.link} target="_blank" rel="noopener noreferrer" className="text-blue-700 font-medium hover:underline truncate block">
+                                    {notice.link}
                                 </a>
-                            ))}
+                            </div>
+                            <a href={notice.link} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm" className="bg-white hover:bg-blue-50 text-blue-700 border-blue-200 shrink-0 ml-4">
+                                    바로가기 <ExternalLink className="w-3 h-3 ml-2" />
+                                </Button>
+                            </a>
                         </div>
+                    )}
+
+                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-base min-h-[300px]">
+                        {renderContent(notice.content)}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );

@@ -14,43 +14,78 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
     const inputRef = useRef<HTMLInputElement>(null);
     const [attendees, setAttendees] = useState<any[]>([]);
 
-    // Focus input on load
+    // Scanner state
+    const scannerRef = useRef<any>(null);
+    const [isScannerRunning, setIsScannerRunning] = useState(false);
+    const [useFrontCamera, setUseFrontCamera] = useState(false);
+
+    // Focus input on load & Start Scanner
     useEffect(() => {
         inputRef.current?.focus();
 
-        // Initialize Scanner if library exists
+        // Initialize Scanner
         // @ts-ignore
-        if (typeof Html5QrcodeScanner !== 'undefined') {
+        if (typeof Html5Qrcode !== 'undefined' && !scannerRef.current) {
             // @ts-ignore
-            const scanner = new Html5QrcodeScanner(
-                "reader",
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    // iOS Safari requires these settings
-                    rememberLastUsedCamera: true,
-                    aspectRatio: 1.0,
-                    // Use environment camera (back camera) by default
-                    videoConstraints: {
-                        facingMode: { ideal: "environment" }
-                    }
-                },
-                /* verbose= */ true // Enable verbose for debugging iOS issues
-            );
+            const html5QrCode = new Html5Qrcode("reader");
+            scannerRef.current = html5QrCode;
 
-            scanner.render((decodedText: string) => {
-                handleScanInput(decodedText);
-                // Optional: Pause scanning briefly?
-                toast.success("스캔 성공!");
-            }, (error: any) => {
-                // handle scan error (ignore frequent errors)
-            });
-
-            return () => {
-                scanner.clear().catch((error: any) => console.error("Failed to clear scanner. ", error));
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0 
             };
+            
+            // Auto start with environment camera
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                (decodedText: string) => {
+                    handleScanInput(decodedText);
+                },
+                (errorMessage: any) => {
+                    // ignore errors
+                }
+            ).then(() => {
+                setIsScannerRunning(true);
+            }).catch((err: any) => {
+                console.error("Error starting scanner", err);
+                // toast.error("카메라 권한을 확인해주세요.");
+            });
         }
+
+        return () => {
+            if (scannerRef.current && scannerRef.current.isScanning) {
+                scannerRef.current.stop().then(() => {
+                    scannerRef.current.clear();
+                }).catch((err: any) => console.error(err));
+            }
+        };
     }, []);
+
+    const toggleCamera = () => {
+        if (!scannerRef.current || !isScannerRunning) return;
+        
+        const nextUseFront = !useFrontCamera;
+        setUseFrontCamera(nextUseFront);
+
+        scannerRef.current.stop().then(() => {
+            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            const cameraConfig = nextUseFront ? { facingMode: "user" } : { facingMode: "environment" };
+            
+            return scannerRef.current.start(
+                cameraConfig,
+                config,
+                (decodedText: string) => handleScanInput(decodedText),
+                (err: any) => {}
+            );
+        }).then(() => {
+            setIsScannerRunning(true);
+        }).catch((err: any) => {
+            console.error("Failed to toggle camera", err);
+            toast.error("카메라 전환 실패");
+        });
+    };
 
     const handleScanInput = (text: string) => {
         try {
@@ -59,6 +94,7 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
         } catch {
             addAttendee(`학번 ${text}`, text);
         }
+        toast.success('스캔 성공!');
     };
 
     const handleScan = (e: React.FormEvent) => {
@@ -66,16 +102,21 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
         if (!scanInput) return;
         handleScanInput(scanInput);
         setScanInput('');
-        toast.success('출석 확인되었습니다.');
     };
 
     const addAttendee = (name: string, studentId: string) => {
-        setAttendees(prev => [{
-            id: Date.now(),
-            name,
-            studentId,
-            time: new Date().toLocaleTimeString()
-        }, ...prev]);
+        setAttendees(prev => {
+             // 3초 이내 중복 스캔 방지
+            if (prev.length > 0 && prev[0].studentId === studentId && (Date.now() - prev[0].id) < 3000) {
+                return prev;
+            }
+            return [{
+                id: Date.now(),
+                name,
+                studentId,
+                time: new Date().toLocaleTimeString()
+            }, ...prev];
+        });
     };
 
     return (
@@ -93,11 +134,27 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
                 {/* Input Area */}
                 <Card className="flex flex-col justify-center items-center p-8 border-2 border-primary/20 bg-blue-50/30 overflow-hidden">
-                    <div id="reader" className="w-[300px] h-[300px] mb-6 bg-gray-100 rounded-lg overflow-hidden"></div>
+                    
+                    <div className="relative mb-6 rounded-lg overflow-hidden shadow-lg bg-black">
+                        <div id="reader" className="w-[300px] h-[300px]"></div>
+                        {isScannerRunning && (
+                            <Button 
+                                type="button" 
+                                variant="secondary" 
+                                size="sm" 
+                                className="absolute bottom-2 right-2 z-10 opacity-90 text-xs h-8"
+                                onClick={toggleCamera}
+                            >
+                                <ScanLine className="w-3 h-3 mr-1" />
+                                {useFrontCamera ? "후면 전환" : "전면 전환"}
+                            </Button>
+                        )}
+                    </div>
 
-                    {!scanInput && <div className="bg-white p-4 rounded-full mb-6 shadow-sm">
+                    {!scanInput && !isScannerRunning && <div className="bg-white p-4 rounded-full mb-6 shadow-sm">
                         <ScanLine className="w-12 h-12 text-blue-500" />
                     </div>}
+
                     <form onSubmit={handleScan} className="w-full max-w-sm space-y-4">
                         <Input
                             ref={inputRef}
@@ -108,7 +165,7 @@ export default function EventScanPage({ params }: { params: Promise<{ id: string
                             autoComplete="off"
                         />
                         <p className="text-center text-xs text-gray-400">
-                            스캐너를 사용하거나 학번 입력 후 엔터를 누르세요.
+                            카메라가 자동으로 실행됩니다.
                         </p>
                     </form>
                 </Card>
