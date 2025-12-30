@@ -21,7 +21,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [copyBuffer, setCopyBuffer] = useState<any[]>([]);
 
-    // Drawing Mode
+    // Drawing Mode (Wall removed from UI but keeping logic for safety or legacy)
     const [drawMode, setDrawMode] = useState<'NONE' | 'WALL'>('NONE');
     const [drawStart, setDrawStart] = useState<{ x: number, y: number } | null>(null);
     const [drawPreview, setDrawPreview] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
@@ -121,6 +121,11 @@ export function SeatEditor({ roomId }: { roomId: string }) {
 
     // Drawing Logic
     const handleCanvasMouseDown = (e: React.MouseEvent) => {
+        // Prevent lasso if clicking on a seat/draggable
+        // We check if the target has a class or data-attribute that indicates it's a seat
+        // @ts-ignore
+        if (e.target.closest('[data-draggable="true"]')) return;
+
         if (drawMode === 'WALL') {
             const rect = e.currentTarget.getBoundingClientRect();
             const x = Math.floor((e.clientX - rect.left) / (gridSize * scale));
@@ -193,12 +198,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                 const sw = s.width * gridSize * scale;
                 const sh = s.height * gridSize * scale;
 
-                // Check AABB intersection
-                // selectionBox is in scaled pixels (relative to container) if we consider scale in calculation?
-                // Wait. selectionBox derived from clientX - rect.left. This IS unscaled screen pixels inside container.
-                // The seat coordinates (sx, sy, sw, sh) are multiplied by scale.
-                // So they match!
-
                 if (
                     selectionBox.x < sx + sw &&
                     selectionBox.x + selectionBox.w > sx &&
@@ -210,9 +209,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
             });
 
             setSelectedIds(prev => {
-                // Determine if we are adding (Shift/Ctrl) or just setting.
-                // We checked modifiers in MouseDown. If no modifier, we cleared selectedIds.
-                // So we can just add newSelected to whatever is there (which is empty if no modifier, or existing if modifier).
                 return [...new Set([...prev, ...newSelected])];
             });
 
@@ -293,14 +289,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                     <Button variant="outline" size="sm" onClick={() => addNode('WINDOW')}><Box className="mr-2 h-4 w-4" />창문</Button>
                     <Button variant="outline" size="sm" onClick={() => addNode('DOOR')}><DoorOpen className="mr-2 h-4 w-4" />문</Button>
                     <Button variant="outline" size="sm" onClick={() => addNode('PILLAR')}><Columns className="mr-2 h-4 w-4" />기둥</Button>
-
-                    <Button
-                        variant={drawMode === 'WALL' ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setDrawMode(drawMode === 'WALL' ? 'NONE' : 'WALL')}
-                    >
-                        <Maximize className="mr-2 h-4 w-4" />벽 그리기
-                    </Button>
 
                     <div className="h-6 w-px bg-gray-200 mx-2" />
                     <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.2, s - 0.1))}><ZoomOut className="h-4 w-4" /></Button>

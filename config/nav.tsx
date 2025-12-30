@@ -10,12 +10,14 @@ export const NAV_LINKS = [
         description: "메인 대시보드로 이동합니다."
     },
     {
-        name: "공지사항",
-        href: `/notice`,
-        icon: Megaphone,
-        roles: ["ADMIN", "TEACHER", "STUDENT"],
-        description: "학교의 주요 공지사항을 확인합니다."
+        name: "조회",
+        href: `/`,
+        icon: LayoutDashboard,
+        roles: [], // Hidden
+        description: "" // Placeholder to maintain structure if needed, or better to remove entirely.
     },
+    // Removed Notice Link from Menu as per feedback
+
 
     // Teacher
     {
@@ -133,5 +135,14 @@ export const NAV_LINKS = [
         icon: TreeDeciduous,
         roles: ["TEACHER", "STUDENT"],
         description: "학교 관련 주요 링크를 확인합니다."
+    },
+
+    // Bottom
+    {
+        name: "건의함",
+        href: "/common/suggestions",
+        icon: Megaphone,
+        roles: ["ADMIN", "TEACHER", "STUDENT"],
+        description: "학교 생활에 대한 건의사항을 남깁니다."
     },
 ];

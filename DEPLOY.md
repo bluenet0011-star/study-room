@@ -84,6 +84,9 @@
    | **DATABASE_URL** | (아까 메모한 Supabase 연결 주소) |
    | **NEXTAUTH_SECRET** | (아무 영어+숫자 조합 길게 입력, 예: `mysecretkey1234`) |
    | **NEXTAUTH_URL** | (비워두거나, 배포 후 생성된 주소 입력) |
+   | **NEXT_PUBLIC_VAPID_PUBLIC_KEY** | (선택: 웹 푸시 알림용, `npx web-push generate-vapid-keys`로 생성) |
+   | **VAPID_PRIVATE_KEY** | (선택: 웹 푸시 알림용 Private Key) |
+   | **VAPID_SUBJECT** | (선택: `mailto:admin@example.com`) |
 
 3. **Deploy 클릭**
    - `Deploy` 버튼을 누르면 약 1~2분 후 배포가 완료됩니다.

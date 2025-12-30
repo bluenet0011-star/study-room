@@ -133,7 +133,7 @@ export default function LostFoundPage() {
 
                 <div className="w-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start gap-2 text-sm mt-2 md:mt-0">
                     <span className="font-bold shrink-0">주의:</span>
-                    <span>분실물 센터에 사적인 글이나 장난 글을 올리지 마세요. 적발 시 불이익이 있을 수 있습니다.</span>
+                    <span>분실물 센터에 사적인 글이나 장난 글을 올리지 마세요.</span>
                 </div>
 
                 <div className="flex w-full md:w-auto gap-2">

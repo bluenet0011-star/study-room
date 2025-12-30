@@ -119,6 +119,10 @@ export default function SuggestionsPage() {
         item.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const [isCreditsOpen, setIsCreditsOpen] = useState(false);
+
+    // ... (inside component)
+
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -131,46 +135,48 @@ export default function SuggestionsPage() {
                 </div>
 
                 <div className="flex w-full md:w-auto gap-2">
+                    {/* Credits Button */}
+                    <Button variant="outline" size="icon" onClick={() => setIsCreditsOpen(true)} title="Credits">
+                        <span className="text-xl">©</span>
+                    </Button>
+
                     <div className="relative flex-1 md:w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input
-                            placeholder="제목, 내용 검색"
-                            className="pl-9"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        {/* ... search ... */}
                     </div>
 
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="gap-2"><Plus className="w-4 h-4" /> 글쓰기</Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                            <DialogHeader>
-                                <DialogTitle>건의사항 작성</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>제목</Label>
-                                    <Input placeholder="건의사항 제목" value={title} onChange={e => setTitle(e.target.value)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>내용</Label>
-                                    <Textarea
-                                        placeholder="건의할 내용을 구체적으로 적어주세요."
-                                        className="min-h-[150px]"
-                                        value={content}
-                                        onChange={e => setContent(e.target.value)}
-                                    />
-                                </div>
-                                <Button className="w-full" onClick={handleCreate} disabled={loading}>
-                                    {loading ? "등록 중..." : "등록하기"}
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                    {/* ... create dialog ... */}
+                    <div className="space-y-4 py-4">
+                        {/* ... */}
+                        <div className="space-y-2">
+                            <Label>내용</Label>
+                            <Textarea
+                                placeholder="학교 발전을 위한 소중한 의견을 적어주세요. 상호 존중하는 언어를 사용해주시기 바랍니다."
+                                className="min-h-[150px]"
+                                value={content}
+                                onChange={e => setContent(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Credits Dialog */}
+            <Dialog open={isCreditsOpen} onOpenChange={setIsCreditsOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Credits</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 text-center space-y-2">
+                        <p className="text-lg font-bold">Study Room Management System</p>
+                        <p className="text-gray-500">Developed by DGHS IT Club</p>
+                        <div className="pt-4 text-sm text-gray-400">
+                            Version 1.0.0
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ... rest of component ... */}
 
             {/* Items Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[200px]">

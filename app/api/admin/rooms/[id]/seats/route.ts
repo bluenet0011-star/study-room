@@ -31,54 +31,58 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { seats } = body;
 
     // Transaction: Sync state (Delete missing, Upsert provided)
-    await prisma.$transaction(async (tx: any) => {
-        const currentSeats = await tx.seat.findMany({ where: { roomId: resolvedParams.id } });
+    try {
+        await prisma.$transaction(async (tx: any) => {
+            const currentSeats = await tx.seat.findMany({ where: { roomId: resolvedParams.id } });
 
-        // Incoming IDs that actually exist (exclude 'new-...' temporary IDs)
-        const incomingExistingIds = seats
-            .map((s: any) => s.id)
-            .filter((id: any) => id && !id.startsWith('new-'));
+            // Incoming IDs that actually exist (exclude 'new-...' temporary IDs)
+            const incomingExistingIds = seats
+                .map((s: any) => s.id)
+                .filter((id: any) => id && !id.startsWith('new-'));
 
-        const toDeleteIds = currentSeats
-            .filter((s: any) => !incomingExistingIds.includes(s.id))
-            .map((s: any) => s.id);
+            const toDeleteIds = currentSeats
+                .filter((s: any) => !incomingExistingIds.includes(s.id))
+                .map((s: any) => s.id);
 
-        if (toDeleteIds.length > 0) {
-            await tx.seat.deleteMany({ where: { id: { in: toDeleteIds } } });
-        }
-
-        for (const seat of seats) {
-            const isNew = !seat.id || seat.id.startsWith('new-');
-
-            if (isNew) {
-                await tx.seat.create({
-                    data: {
-                        roomId: resolvedParams.id,
-                        label: seat.label,
-                        x: seat.x,
-                        y: seat.y,
-                        type: seat.type || "SEAT",
-                        rotation: seat.rotation || 0,
-                        width: seat.width || 1,
-                        height: seat.height || 1,
-                    }
-                });
-            } else {
-                await tx.seat.update({
-                    where: { id: seat.id },
-                    data: {
-                        x: seat.x,
-                        y: seat.y,
-                        label: seat.label,
-                        type: seat.type,
-                        rotation: seat.rotation,
-                        width: seat.width,
-                        height: seat.height,
-                    }
-                });
+            if (toDeleteIds.length > 0) {
+                await tx.seat.deleteMany({ where: { id: { in: toDeleteIds } } });
             }
-        }
-    });
 
-    return NextResponse.json({ success: true });
+            for (const seat of seats) {
+                const isNew = !seat.id || seat.id.startsWith('new-');
+
+                if (isNew) {
+                    await tx.seat.create({
+                        data: {
+                            roomId: resolvedParams.id,
+                            label: seat.label,
+                            x: seat.x,
+                            y: seat.y,
+                            type: seat.type || "SEAT",
+                            rotation: seat.rotation || 0,
+                            width: seat.width || 1,
+                            height: seat.height || 1,
+                        }
+                    });
+                } else {
+                    await tx.seat.update({
+                        where: { id: seat.id },
+                        data: {
+                            x: seat.x,
+                            y: seat.y,
+                            label: seat.label,
+                            type: seat.type,
+                            rotation: seat.rotation,
+                            width: seat.width,
+                            height: seat.height,
+                        }
+                    });
+                }
+            }
+        });
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Seat Save Error:", error);
+        return new NextResponse("Failed to save seats", { status: 500 });
+    }
 }

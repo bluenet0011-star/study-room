@@ -30,6 +30,7 @@ export default function TeacherEventsPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [newTitle, setNewTitle] = useState('');
+    const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Target List State
     const [targets, setTargets] = useState<StudentTarget[]>([]);
@@ -59,6 +60,10 @@ export default function TeacherEventsPage() {
             toast.error("행사명을 입력해주세요.");
             return;
         }
+        if (!newDate) {
+            toast.error("날짜를 선택해주세요.");
+            return;
+        }
 
         setSubmitting(true);
         try {
@@ -66,6 +71,7 @@ export default function TeacherEventsPage() {
                 method: 'POST',
                 body: JSON.stringify({
                     title: newTitle,
+                    date: new Date(newDate),
                     targets: targets
                 })
             });
@@ -224,6 +230,11 @@ export default function TeacherEventsPage() {
                             <div className="space-y-2">
                                 <Label>행사명</Label>
                                 <Input placeholder="예: 3월 모의고사 소집" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>행사 날짜</Label>
+                                <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} />
                             </div>
 
                             <div className="space-y-2">

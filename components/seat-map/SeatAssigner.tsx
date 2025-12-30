@@ -9,6 +9,7 @@ import { Loader2, Search, UserPlus, UserMinus, ZoomIn, ZoomOut } from 'lucide-re
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { parseStudentId, formatStudentId } from '@/lib/student-id';
 
 
 interface Seat {
@@ -80,7 +81,14 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`/api/admin/students/search?query=${encodeURIComponent(searchQuery)}`);
+            // Apply ID transformation if applicable
+            let query = searchQuery;
+            const parsed = parseStudentId(searchQuery);
+            if (parsed.isValid) {
+                query = formatStudentId(parsed.grade, parsed.class, parsed.number);
+            }
+
+            const res = await fetch(`/api/admin/students/search?query=${encodeURIComponent(query)}`);
             const data = await res.json();
             setSearchResults(data);
         } catch (e) {
@@ -248,7 +256,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                 <div>
                                     <p className="font-bold text-blue-700">{selectedSeat.student.name}</p>
                                     <p className="text-sm text-blue-600">
-                                        {selectedSeat.student.grade}학년 {selectedSeat.student.class}반 {selectedSeat.student.number}번
+                                        {formatStudentId(selectedSeat.student.grade, selectedSeat.student.class, selectedSeat.student.number)}
                                     </p>
                                 </div>
                                 <Button variant="destructive" size="sm" onClick={handleUnassign}>
@@ -261,7 +269,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                         <div className="py-4 space-y-4">
                             <div className="flex gap-2">
                                 <Input
-                                    placeholder="학생 이름 또는 아이디 검색"
+                                    placeholder="학생 이름 또는 학번(10101) 검색"
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     autoFocus
@@ -272,11 +280,16 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                             </div>
 
                             <ScrollArea className="h-60 rounded-md border p-2">
-                                {searchResults.length === 0 && searchQuery && !isSearching && (
+                                {isSearching && (
+                                    <div className="flex justify-center items-center py-8">
+                                        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                                    </div>
+                                )}
+                                {!isSearching && searchResults.length === 0 && searchQuery && (
                                     <p className="text-center text-sm text-gray-500 py-4">검색 결과가 없습니다.</p>
                                 )}
                                 <div className="space-y-2">
-                                    {searchResults.map(student => (
+                                    {!isSearching && searchResults.map(student => (
                                         <div
                                             key={student.id}
                                             className="flex items-center justify-between p-2 hover:bg-gray-100 rounded-md border text-sm cursor-pointer group"
@@ -285,7 +298,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                             <div>
                                                 <span className="font-medium group-hover:text-blue-600 transition-colors">{student.name}</span>
                                                 <span className="ml-2 text-xs text-gray-500">
-                                                    ({student.grade}-{student.class}-{student.number})
+                                                    ({formatStudentId(student.grade, student.class, student.number)})
                                                 </span>
                                             </div>
                                             <Button size="sm" variant="ghost" className="group-hover:bg-blue-50 group-hover:text-blue-600">

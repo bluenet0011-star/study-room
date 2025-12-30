@@ -53,10 +53,12 @@ export async function POST(req: Request) {
             // Try DB
             // @ts-ignore
             // @ts-ignore
+            // @ts-ignore
+            // @ts-ignore
             const event = await prisma.event.create({
                 data: {
                     title: body.title,
-                    date: new Date(),
+                    date: body.date ? new Date(body.date) : new Date(),
                     targets: {
                         create: body.targets || []
                     }

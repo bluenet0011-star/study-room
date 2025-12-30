@@ -367,7 +367,7 @@ export default function TeacherPlanPage() {
 
             {/* 2. History Section */}
             <div>
-                <h1 className="text-2xl font-bold mb-4">지난 이력 (History)</h1>
+                <h1 className="text-2xl font-bold mb-4">Permission History</h1>
 
                 <div className="flex gap-2 mb-4">
                     <div className="flex flex-wrap gap-2 items-center flex-1">
@@ -411,15 +411,16 @@ export default function TeacherPlanPage() {
                         </div>
 
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                                 setSearch('');
                                 setHistoryStatusFilter('ALL');
                                 setHistoryDateRange({ start: '', end: '' });
                             }}
-                            className="text-gray-500"
+                            className="bg-white hover:bg-gray-50"
                         >
+                            <X className="w-3 h-3 mr-1" />
                             초기화
                         </Button>
                     </div>

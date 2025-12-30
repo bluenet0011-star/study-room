@@ -83,17 +83,16 @@ function LoginForm() {
                     <div className="w-16 h-16 bg-gradient-to-tr from-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-red-200 transform rotate-3">
                         <GraduationCap className="w-8 h-8" />
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">DGHS</h1>
-                    <p className="text-gray-500 text-sm font-medium tracking-wide uppercase">Study Room Management</p>
+                    <h1 className="text-4xl font-black text-red-600 mb-2 tracking-tight">DGHS</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                        <Label htmlFor="loginId" className="text-xs font-semibold text-gray-500 ml-1">아이디</Label>
+                        <Label htmlFor="loginId" className="text-xs font-semibold text-gray-500 ml-1">학번</Label>
                         <Input
                             id="loginId"
                             type="text"
-                            placeholder="아이디 입력"
+                            placeholder="학번 입력"
                             value={loginId}
                             onChange={(e) => setLoginId(e.target.value)}
                             disabled={loading}
