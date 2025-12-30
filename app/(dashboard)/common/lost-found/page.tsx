@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, MapPin, Search, User, Briefcase } from 'lucide-react';
+import { Plus, MapPin, Search, User, Briefcase, Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface LostItem {
@@ -29,6 +29,7 @@ interface LostItem {
 export default function LostFoundPage() {
     const { data: session } = useSession();
     const [items, setItems] = useState<LostItem[]>([]);
+    const [isFetching, setIsFetching] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +47,7 @@ export default function LostFoundPage() {
     }, []);
 
     const fetchItems = async (query = '') => {
+        setIsFetching(true);
         try {
             const res = await fetch(`/api/common/lost-found?q=${encodeURIComponent(query)}`);
             if (res.ok) {
@@ -54,6 +56,8 @@ export default function LostFoundPage() {
             }
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsFetching(false);
         }
     };
 
@@ -125,6 +129,11 @@ export default function LostFoundPage() {
                 <div>
                     <h1 className="text-2xl font-bold">분실물 센터</h1>
                     <p className="text-muted-foreground">학교에서 잃어버리거나 습득한 물건을 공유하세요.</p>
+                </div>
+
+                <div className="w-full bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start gap-2 text-sm mt-2 md:mt-0">
+                    <span className="font-bold shrink-0">주의:</span>
+                    <span>분실물 센터에 사적인 글이나 장난 글을 올리지 마세요. 적발 시 불이익이 있을 수 있습니다.</span>
                 </div>
 
                 <div className="flex w-full md:w-auto gap-2">
@@ -214,15 +223,20 @@ export default function LostFoundPage() {
             </div>
 
             {/* Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {items.length === 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[200px]">
+                {isFetching && (
+                    <div className="col-span-full flex items-center justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                )}
+                {!isFetching && items.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 bg-gray-50/50 rounded-xl border-2 border-dashed">
                         <Search className="w-12 h-12 mb-4 opacity-20" />
                         <p className="text-lg font-medium">등록된 글이 없습니다.</p>
                         <p className="text-sm">첫 번째 글을 작성해보세요!</p>
                     </div>
                 )}
-                {items.map(item => (
+                {!isFetching && items.map(item => (
                     <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer group flex flex-col" onClick={() => setSelectedId(item.id)}>
                         <CardHeader className="p-4 pb-3">
                             <div className="flex justify-between items-start gap-2 mb-2">

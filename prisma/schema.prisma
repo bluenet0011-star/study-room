@@ -7,38 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
-  id            String    @id @default(cuid())
-  role          Role      @default(STUDENT)
-  loginId       String    @unique
-  passwordHash  String
-  password      String?
-  name          String
-  grade         Int?
-  class         Int?
-  number        Int?
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  role         Role     @default(STUDENT)
+  loginId      String   @unique
+  passwordHash String
+  password     String?
+  name         String
+  grade        Int?
+  class        Int?
+  number       Int?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  assignedSeats   SeatAssignment[]
-  permissions     Permission[]     @relation("StudentPermissions")
-  teacherPermissions Permission[] @relation("TeacherPermissions")
-  writtenNotices  Notice[]         @relation("WrittenNotices")
-  writtenLostItems LostItem[]      @relation("WrittenLostItems")
-  emptyPeriods    EmptyPeriod[]    @relation("StudentEmptyPeriods")
-  notifications   Notification[]
-  eventAttendances EventAttendance[]
-  pushSubscriptions PushSubscription[]
+  assignedSeats      SeatAssignment[]
+  permissions        Permission[]      @relation("StudentPermissions")
+  teacherPermissions Permission[]      @relation("TeacherPermissions")
+  writtenNotices     Notice[]          @relation("WrittenNotices")
+  writtenLostItems   LostItem[]        @relation("WrittenLostItems")
+  emptyPeriods       EmptyPeriod[]     @relation("StudentEmptyPeriods")
+  notifications      Notification[]
+  eventAttendances   EventAttendance[]
+
+  pushSubscriptions  PushSubscription[]
+  writtenSuggestions Suggestion[]       @relation("WrittenSuggestions")
 }
 
 model Room {
   id        String   @id @default(cuid())
   name      String
-  grade     Int?     // Target grade level (1, 2, 3)
+  grade     Int? // Target grade level (1, 2, 3)
   active    Boolean  @default(true)
   seats     Seat[]
   createdAt DateTime @default(now())
@@ -46,55 +46,55 @@ model Room {
 }
 
 model Seat {
-  id        String   @id @default(cuid())
-  roomId    String
-  label     String   // Display number/text
-  type      String   @default("SEAT") // SEAT, WINDOW, DOOR, WALL, PILLAR, EMPTY
-  rotation  Int      @default(0)
-  x         Int      // Grid coordinates
-  y         Int
-  width     Int      @default(1)
-  height    Int      @default(1)
-  active    Boolean  @default(true)
-  
-  room      Room     @relation(fields: [roomId], references: [id])
+  id       String  @id @default(cuid())
+  roomId   String
+  label    String // Display number/text
+  type     String  @default("SEAT") // SEAT, WINDOW, DOOR, WALL, PILLAR, EMPTY
+  rotation Int     @default(0)
+  x        Int // Grid coordinates
+  y        Int
+  width    Int     @default(1)
+  height   Int     @default(1)
+  active   Boolean @default(true)
+
+  room        Room             @relation(fields: [roomId], references: [id])
   assignments SeatAssignment[]
 
   @@index([roomId])
 }
 
 model SeatAssignment {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   seatId    String
   userId    String
-  active    Boolean  @default(true)
-  startDate DateTime @default(now())
+  active    Boolean   @default(true)
+  startDate DateTime  @default(now())
   endDate   DateTime?
 
-  seat      Seat     @relation(fields: [seatId], references: [id])
-  student   User     @relation(fields: [userId], references: [id])
+  seat    Seat @relation(fields: [seatId], references: [id])
+  student User @relation(fields: [userId], references: [id])
 
   @@index([seatId])
   @@index([userId])
 }
 
 model Permission {
-  id          String           @id @default(cuid())
+  id          String   @id @default(cuid())
   studentId   String
   teacherId   String?
-  status      String @default("PENDING")
+  status      String   @default("PENDING")
   type        String   @default("MOVEMENT")
-  start       DateTime         // Planned start time
-  end         DateTime         // Planned end time
+  start       DateTime // Planned start time
+  end         DateTime // Planned end time
   reason      String
-  location    String?          // Location of permission (e.g., specific room or destination)
+  location    String? // Location of permission (e.g., specific room or destination)
   teacherNote String?
-  
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
 
-  student     User             @relation("StudentPermissions", fields: [studentId], references: [id])
-  teacher     User?            @relation("TeacherPermissions", fields: [teacherId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User  @relation("StudentPermissions", fields: [studentId], references: [id])
+  teacher User? @relation("TeacherPermissions", fields: [teacherId], references: [id])
 
   @@index([studentId])
   @@index([teacherId])
@@ -108,24 +108,24 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
 
 model Notice {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  authorId  String
-  target    String?
-  important Boolean  @default(false)
-  link      String?
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  authorId    String
+  target      String?
+  important   Boolean  @default(false)
+  link        String?
   attachments String[] @default([])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  author    User     @relation("WrittenNotices", fields: [authorId], references: [id])
+  author User @relation("WrittenNotices", fields: [authorId], references: [id])
 }
 
 model EmptyPeriod {
@@ -139,7 +139,7 @@ model EmptyPeriod {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student   User     @relation("StudentEmptyPeriods", fields: [studentId], references: [id])
+  student User @relation("StudentEmptyPeriods", fields: [studentId], references: [id])
 }
 
 model LostItem {
@@ -154,7 +154,18 @@ model LostItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  author    User     @relation("WrittenLostItems", fields: [authorId], references: [id])
+  author User @relation("WrittenLostItems", fields: [authorId], references: [id])
+}
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User @relation("WrittenSuggestions", fields: [authorId], references: [id])
 }
 
 model Event {
@@ -164,7 +175,7 @@ model Event {
   type      String   @default("QR_CHECKIN")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   attendances EventAttendance[]
   targets     EventTarget[]
 }
@@ -176,7 +187,7 @@ model EventTarget {
   studentId String
   createdAt DateTime @default(now())
 
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, studentId])
 }
@@ -186,9 +197,9 @@ model EventAttendance {
   eventId   String
   studentId String
   scannedAt DateTime @default(now())
-  
-  event     Event    @relation(fields: [eventId], references: [id])
-  student   User     @relation(fields: [studentId], references: [id])
+
+  event   Event @relation(fields: [eventId], references: [id])
+  student User  @relation(fields: [studentId], references: [id])
 
   @@unique([eventId, studentId])
 }
@@ -197,11 +208,11 @@ model PushSubscription {
   id        String   @id @default(cuid())
   userId    String
   endpoint  String
-  keys      String   // JSON string of { p256dh, auth }
+  keys      String // JSON string of { p256dh, auth }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }

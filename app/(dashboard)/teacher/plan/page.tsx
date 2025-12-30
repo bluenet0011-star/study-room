@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { PermissionForm } from '@/components/forms/PermissionForm';
 
 const typeMap: Record<string, string> = {
     MOVEMENT: '이동',
@@ -138,9 +139,10 @@ export default function TeacherPlanPage() {
 
             if (historyRes.ok) {
                 const data = await historyRes.json();
-                setHistoryPermissions(data);
-                // Only reset filtered history if search is empty to avoid clearing results while typing/polling (though polling resets currently)
-                if (!search) setFilteredHistory(data);
+                // Sort by ID desc (Application Order proxy)
+                const sorted = data.sort((a: any, b: any) => b.id.localeCompare(a.id));
+                setHistoryPermissions(sorted);
+                if (!search) setFilteredHistory(sorted);
             }
         } catch (error) {
             console.error(error);
@@ -170,19 +172,48 @@ export default function TeacherPlanPage() {
         setProcessingId(null);
     };
 
-    const handleSearch = () => {
-        if (!search.trim()) {
-            setFilteredHistory(historyPermissions);
-            return;
+    const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL');
+    const [historyDateRange, setHistoryDateRange] = useState({ start: '', end: '' });
+
+    // ... (existing states)
+
+    // ... (existing useEffects)
+
+    // Re-run filtering when dependencies change
+    useEffect(() => {
+        filterHistory();
+    }, [search, historyStatusFilter, historyDateRange, historyPermissions]);
+
+    const filterHistory = () => {
+        let filtered = [...historyPermissions];
+
+        // 1. Search Query
+        if (search.trim()) {
+            const query = search.toLowerCase();
+            filtered = filtered.filter(p =>
+                p.student.name.toLowerCase().includes(query) ||
+                (p.location && p.location.toLowerCase().includes(query)) ||
+                (p.reason && p.reason.toLowerCase().includes(query))
+            );
         }
-        const query = search.toLowerCase();
-        const filtered = historyPermissions.filter(p =>
-            p.student.name.toLowerCase().includes(query) ||
-            (p.location && p.location.toLowerCase().includes(query)) ||
-            (p.reason && p.reason.toLowerCase().includes(query))
-        );
+
+        // 2. Status Filter
+        if (historyStatusFilter !== 'ALL') {
+            filtered = filtered.filter(p => p.status === historyStatusFilter);
+        }
+
+        // 3. Date Range Filter
+        if (historyDateRange.start) {
+            filtered = filtered.filter(p => p.start >= `${historyDateRange.start}T00:00:00`);
+        }
+        if (historyDateRange.end) {
+            filtered = filtered.filter(p => p.end <= `${historyDateRange.end}T23:59:59`);
+        }
+
         setFilteredHistory(filtered);
     };
+
+    // ... (rest of component until return)
 
     if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin w-8 h-8 text-gray-400" /></div>;
 
@@ -203,12 +234,14 @@ export default function TeacherPlanPage() {
                     <DialogTrigger asChild>
                         <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
                             <Plus className="w-4 h-4" />
-                            일괄 퍼미션 생성
+                            퍼미션 대리 신청
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>일괄 퍼미션 생성 (교사 권한)</DialogTitle>
+                            <DialogHeader>
+                                <DialogTitle>퍼미션 대리 신청 (교사 권한)</DialogTitle>
+                            </DialogHeader>
                         </DialogHeader>
 
                         <div className="space-y-6 py-4">
@@ -256,44 +289,13 @@ export default function TeacherPlanPage() {
                             {/* 2. Permission Details */}
                             <div className="space-y-4 p-4 border rounded-lg bg-white">
                                 <Label className="text-base font-semibold">2. 퍼미션 내용</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>유형</Label>
-                                        <Select value={bulkForm.type} onValueChange={v => setBulkForm({ ...bulkForm, type: v })}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="MOVEMENT">이동</SelectItem>
-                                                <SelectItem value="OUTING">외출</SelectItem>
-                                                <SelectItem value="EARLY_LEAVE">조퇴</SelectItem>
-                                                <SelectItem value="OTHER">기타</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>장소</Label>
-                                        <Input value={bulkForm.location} onChange={e => setBulkForm({ ...bulkForm, location: e.target.value })} placeholder="예: 시청각실" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>날짜</Label>
-                                        <Input type="date" value={bulkForm.date} onChange={e => setBulkForm({ ...bulkForm, date: e.target.value })} />
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="space-y-2 flex-1">
-                                            <Label>시작</Label>
-                                            <Input type="time" value={bulkForm.startTime} onChange={e => setBulkForm({ ...bulkForm, startTime: e.target.value })} />
-                                        </div>
-                                        <div className="space-y-2 flex-1">
-                                            <Label>종료</Label>
-                                            <Input type="time" value={bulkForm.endTime} onChange={e => setBulkForm({ ...bulkForm, endTime: e.target.value })} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>사유</Label>
-                                    <Input value={bulkForm.reason} onChange={e => setBulkForm({ ...bulkForm, reason: e.target.value })} placeholder="예: 단체 활동" />
-                                </div>
+                                <PermissionForm
+                                    onSubmit={async () => { }} // Handled by parent button
+                                    onChange={(data) => setBulkForm(prev => ({ ...prev, ...data }))}
+                                    showTeacherSelect={false}
+                                    hideSubmitButton={true}
+                                    initialData={bulkForm}
+                                />
                             </div>
 
                             <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleBulkSubmit} disabled={bulkLoading}>
@@ -368,17 +370,59 @@ export default function TeacherPlanPage() {
                 <h1 className="text-2xl font-bold mb-4">지난 이력 (History)</h1>
 
                 <div className="flex gap-2 mb-4">
-                    <div className="relative max-w-sm w-full">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input
-                            placeholder="학생 이름 검색..."
-                            className="pl-9"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                        />
+                    <div className="flex flex-wrap gap-2 items-center flex-1">
+                        <div className="relative max-w-sm min-w-[200px]">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input
+                                placeholder="학생 이름, 장소, 사유 검색..."
+                                className="pl-9"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                        </div>
+
+                        <Select value={historyStatusFilter} onValueChange={setHistoryStatusFilter}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="상태" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">전체 상태</SelectItem>
+                                <SelectItem value="PENDING">대기중</SelectItem>
+                                <SelectItem value="APPROVED">승인됨</SelectItem>
+                                <SelectItem value="REJECTED">반려됨</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <div className="flex items-center gap-1 border rounded-md px-2 py-1 bg-white">
+                            <span className="text-sm text-gray-500">기간:</span>
+                            <Input
+                                type="date"
+                                className="h-8 w-32 border-0 p-0 focus-visible:ring-0"
+                                value={historyDateRange.start}
+                                onChange={e => setHistoryDateRange(prev => ({ ...prev, start: e.target.value }))}
+                            />
+                            <span className="text-gray-400">~</span>
+                            <Input
+                                type="date"
+                                className="h-8 w-32 border-0 p-0 focus-visible:ring-0"
+                                value={historyDateRange.end}
+                                onChange={e => setHistoryDateRange(prev => ({ ...prev, end: e.target.value }))}
+                            />
+                        </div>
+
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setSearch('');
+                                setHistoryStatusFilter('ALL');
+                                setHistoryDateRange({ start: '', end: '' });
+                            }}
+                            className="text-gray-500"
+                        >
+                            초기화
+                        </Button>
                     </div>
-                    <Button onClick={handleSearch} variant="secondary">검색</Button>
                 </div>
 
                 <Card>

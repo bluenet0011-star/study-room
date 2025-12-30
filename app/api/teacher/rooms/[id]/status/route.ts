@@ -64,3 +64,35 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json(seatData);
 }
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'TEACHER') return new NextResponse("Unauthorized", { status: 401 });
+
+    const body = await req.json();
+    const { studentId, type } = body;
+
+    if (!studentId || !type) return new NextResponse("Missing fields", { status: 400 });
+
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000); // Default 1 hour duration
+
+    try {
+        await prisma.permission.create({
+            data: {
+                studentId,
+                teacherId: session.user.id,
+                type,
+                status: 'APPROVED',
+                start: now,
+                end: oneHourLater,
+                reason: 'Teacher Status Update',
+                location: 'Unknown' // Or 'Classroom'
+            }
+        });
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        console.error("Failed to update status", e);
+        return new NextResponse("Internal Server Error", { status: 500 });
+    }
+}

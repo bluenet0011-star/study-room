@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function ProfilePage() {
+    const { data: session } = useSession();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -56,6 +58,48 @@ export default function ProfilePage() {
     return (
         <div className="p-4 md:p-10 max-w-2xl mx-auto space-y-6">
             <h1 className="text-3xl font-bold tracking-tight">내 정보 설정</h1>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        기본 정보
+                    </CardTitle>
+                    <CardDescription>
+                        로그인된 사용자의 기본 정보입니다.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-1">
+                            <span className="text-gray-500 font-medium">이름</span>
+                            <div className="font-semibold text-lg">{session?.user?.name || '-'}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <span className="text-gray-500 font-medium">권한</span>
+                            <div className="font-semibold">{session?.user?.role === 'TEACHER' ? '교사' : session?.user?.role === 'ADMIN' ? '관리자' : '학생'}</div>
+                        </div>
+                        {session?.user?.role === 'STUDENT' && (
+                            <>
+                                <div className="space-y-1">
+                                    <span className="text-gray-500 font-medium">학년/반</span>
+                                    <div className="font-semibold">{(session.user as any).grade}학년 {(session.user as any).classNum}반</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <span className="text-gray-500 font-medium">번호</span>
+                                    <div className="font-semibold">{(session.user as any).studentNum}번</div>
+                                </div>
+                            </>
+                        )}
+                        {session?.user?.role !== 'STUDENT' && (
+                            <div className="space-y-1">
+                                <span className="text-gray-500 font-medium">아이디</span>
+                                <div className="font-semibold">{session?.user?.email || (session?.user as any).loginId || '-'}</div>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>

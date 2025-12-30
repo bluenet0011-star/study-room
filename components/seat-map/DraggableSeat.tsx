@@ -16,7 +16,7 @@ export const DraggableSeat = React.memo(function DraggableSeat({ id, x, y, width
         top: y * gridSize,
         width: width * gridSize,
         height: height * gridSize,
-        position: 'absolute' as 'absolute',
+        position: 'absolute' as const,
         touchAction: 'none',
     };
 

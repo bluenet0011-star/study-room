@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, UserPlus, UserMinus } from 'lucide-react';
+import { Loader2, Search, UserPlus, UserMinus, ZoomIn, ZoomOut } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 
@@ -43,7 +44,19 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Student[]>([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [scale, setScale] = useState(1);
+
+    // Debounced Search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchQuery.trim()) {
+                handleSearch();
+            } else {
+                setSearchResults([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         fetchSeats(); // Initial fetch
@@ -76,9 +89,18 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
         setIsSearching(false);
     };
 
-    const handleAssign = async (studentId: string) => {
+    const handleAssign = async (studentId: string, studentData: Student) => {
         if (!selectedSeat) return;
-        setIsSubmitting(true);
+
+        // Optimistic Update
+        const previousSeats = [...seats];
+        setSeats(prev => prev.map(s => s.id === selectedSeat.id ? { ...s, student: { ...studentData, id: studentId } } : s));
+
+        // Close Dialog immediately for speed
+        setSelectedSeat(null);
+        setSearchQuery('');
+        setSearchResults([]);
+
         try {
             await fetch('/api/admin/seats/assign', {
                 method: 'POST',
@@ -89,17 +111,22 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                     action: 'ASSIGN'
                 })
             });
-            await fetchSeats(true);
-            setSelectedSeat(null);
+            await fetchSeats(true); // Background refresh
         } catch (e) {
             console.error("Assignment failed", e);
+            setSeats(previousSeats); // Revert on error
+            toast.error("배정에 실패했습니다.");
         }
-        setIsSubmitting(false);
     };
 
     const handleUnassign = async () => {
         if (!selectedSeat) return;
-        setIsSubmitting(true);
+
+        // Optimistic
+        const previousSeats = [...seats];
+        setSeats(prev => prev.map(s => s.id === selectedSeat.id ? { ...s, student: undefined } : s));
+        setSelectedSeat(null);
+
         try {
             await fetch('/api/admin/seats/assign', {
                 method: 'POST',
@@ -110,28 +137,37 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                 })
             });
             await fetchSeats(true);
-            setSelectedSeat(null);
         } catch (e) {
             console.error("Unassignment failed", e);
+            setSeats(previousSeats);
+            toast.error("배정 해제 실패");
         }
-        setIsSubmitting(false);
     };
 
     if (loading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin w-10 h-10 text-gray-400" /></div>;
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex justify-end">
-                {/* Excel Actions are now in the parent page */}
+            <div className="flex justify-end gap-2 mb-2">
+                <Button variant="outline" size="sm" onClick={() => setScale(s => Math.max(0.2, s - 0.1))}><ZoomOut className="w-4 h-4" /></Button>
+                <span className="flex items-center text-sm">{Math.round(scale * 100)}%</span>
+                <Button variant="outline" size="sm" onClick={() => setScale(s => Math.min(2, s + 0.1))}><ZoomIn className="w-4 h-4" /></Button>
             </div>
+
             <div className="border bg-gray-50 relative overflow-auto h-[600px] rounded-lg shadow-inner p-4">
-                <div className="relative min-w-[800px] min-h-[600px]">
+                <div
+                    className="relative transition-all origin-top-left"
+                    style={{
+                        width: `${2000 * scale}px`, // Large area
+                        height: `${2000 * scale}px`
+                    }}
+                >
                     {seats.map(seat => {
                         const isSeat = seat.type === 'SEAT' || !seat.type; // Default to SEAT if undefined
-                        const width = (seat.width || 1) * 30; // 30px grid
-                        const height = (seat.height || 1) * 30;
-                        const left = (seat.x || 0) * 30;
-                        const top = (seat.y || 0) * 30;
+                        const width = (seat.width || 1) * 60; // Increased base size to 60px
+                        const height = (seat.height || 1) * 60;
+                        const left = (seat.x || 0) * 60;
+                        const top = (seat.y || 0) * 60;
 
                         if (!isSeat) {
                             // Render non-seat items
@@ -145,7 +181,13 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                         seat.type === 'DOOR' && "bg-amber-100 border border-amber-300 text-amber-700 rounded-sm",
                                         seat.type === 'PILLAR' && "bg-stone-300 border border-stone-400 text-stone-700 rounded-sm"
                                     )}
-                                    style={{ left, top, width, height }}
+                                    style={{
+                                        left: left * scale,
+                                        top: top * scale,
+                                        width: width * scale,
+                                        height: height * scale,
+                                        fontSize: `${12 * scale}px`
+                                    }}
                                 >
                                     {seat.type === 'WINDOW' && "창문"}
                                     {seat.type === 'DOOR' && "문"}
@@ -163,17 +205,22 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                         seat.status === 'OUTING' ? 'bg-red-100 border-red-400 text-red-800' :
                                             seat.student ? 'bg-blue-100 border-blue-400 text-blue-800' : 'bg-white border-gray-300'}
                                 `}
-                                style={{ left, top, width, height }}
+                                style={{
+                                    left: left * scale,
+                                    top: top * scale,
+                                    width: width * scale,
+                                    height: height * scale
+                                }}
                                 onClick={() => {
                                     setSelectedSeat(seat);
                                     setSearchQuery('');
                                     setSearchResults([]);
                                 }}
                             >
-                                <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden">
-                                    <span className="font-bold shrink-0">{seat.label}</span>
+                                <div className="flex flex-col items-center justify-center w-full h-full overflow-hidden p-1">
+                                    <span className="font-bold shrink-0" style={{ fontSize: `${14 * scale}px` }}>{seat.label}</span>
                                     {seat.student && (
-                                        <span className="truncate w-full text-center px-0.5 font-medium leading-tight">
+                                        <span className="truncate w-full text-center px-0.5 font-medium leading-tight" style={{ fontSize: `${12 * scale}px` }}>
                                             {seat.student.name}
                                             {seat.status === 'MOVEMENT' && <span className="block text-[8px] text-yellow-700">이동</span>}
                                             {seat.status === 'OUTING' && <span className="block text-[8px] text-orange-700">외출</span>}
@@ -204,7 +251,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                         {selectedSeat.student.grade}학년 {selectedSeat.student.class}반 {selectedSeat.student.number}번
                                     </p>
                                 </div>
-                                <Button variant="destructive" size="sm" onClick={handleUnassign} disabled={isSubmitting}>
+                                <Button variant="destructive" size="sm" onClick={handleUnassign}>
                                     <UserMinus className="w-4 h-4 mr-2" />
                                     배정 해제
                                 </Button>
@@ -217,9 +264,9 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                     placeholder="학생 이름 또는 아이디 검색"
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                                    autoFocus
                                 />
-                                <Button onClick={handleSearch} disabled={isSearching}>
+                                <Button disabled={isSearching}>
                                     {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                                 </Button>
                             </div>
@@ -233,7 +280,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                         <div
                                             key={student.id}
                                             className="flex items-center justify-between p-2 hover:bg-gray-100 rounded-md border text-sm cursor-pointer group"
-                                            onClick={() => handleAssign(student.id)}
+                                            onClick={() => handleAssign(student.id, student)}
                                         >
                                             <div>
                                                 <span className="font-medium group-hover:text-blue-600 transition-colors">{student.name}</span>
@@ -241,7 +288,7 @@ export default function SeatAssigner({ roomId }: { roomId: string }) {
                                                     ({student.grade}-{student.class}-{student.number})
                                                 </span>
                                             </div>
-                                            <Button size="sm" variant="ghost" className="group-hover:bg-blue-50 group-hover:text-blue-600" disabled={isSubmitting}>
+                                            <Button size="sm" variant="ghost" className="group-hover:bg-blue-50 group-hover:text-blue-600">
                                                 <UserPlus className="w-4 h-4 mr-2" />
                                                 배정
                                             </Button>

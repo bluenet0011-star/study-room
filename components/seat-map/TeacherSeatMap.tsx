@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { User, FileText, Clock, AlertCircle, Check, ZoomIn, ZoomOut } from 'lucide-react';
+import { User, FileText, Clock, AlertCircle, Check, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -37,7 +37,10 @@ const typeMap: Record<string, string> = {
     MOVEMENT: '이동',
     OUTING: '외출',
     EARLY_LEAVE: '조퇴',
-    OTHER: '기타'
+    OTHER: '기타',
+    CHECKED: '확인됨',
+    ABSENT: '부재중',
+    GUIDANCE: '지도중'
 };
 
 const statusMap: Record<string, string> = {
@@ -46,14 +49,16 @@ const statusMap: Record<string, string> = {
     REJECTED: '반려됨'
 };
 
-const SeatComponent = memo(({ seat, onClick, guidanceMode, style }: { seat: Seat, onClick: (s: Seat) => void, guidanceMode: boolean, style: any }) => {
+const SeatComponent = memo(({ seat, onClick, style }: { seat: Seat, onClick: (s: Seat) => void, style: any }) => {
     const isAssigned = !!seat.student;
 
     // Determine seat color based on status
     let seatColorClass = "bg-white border-gray-200 text-gray-400 hover:border-blue-400";
     if (isAssigned) {
-        if (seat.status === 'MOVEMENT' || seat.status === 'OUTING') {
-            seatColorClass = "bg-red-100 border-red-400 text-red-800 font-medium";
+        if (['MOVEMENT', 'OUTING', 'ABSENT', 'GUIDANCE'].includes(seat.status)) {
+            seatColorClass = "bg-red-50 border-red-400 text-red-800 font-medium";
+        } else if (seat.status === 'CHECKED') {
+            seatColorClass = "bg-green-50 border-green-400 text-green-800 font-medium";
         } else {
             seatColorClass = "bg-blue-50 border-blue-200 text-blue-900 font-medium";
         }
@@ -64,8 +69,7 @@ const SeatComponent = memo(({ seat, onClick, guidanceMode, style }: { seat: Seat
             onClick={() => onClick(seat)}
             className={cn(
                 "absolute rounded-lg border text-xs flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-sm z-10",
-                seatColorClass,
-                guidanceMode && isAssigned && "ring-2 ring-red-400 ring-offset-1"
+                seatColorClass
             )}
             style={style}
         >
@@ -73,7 +77,7 @@ const SeatComponent = memo(({ seat, onClick, guidanceMode, style }: { seat: Seat
             {isAssigned ? (
                 <span className="truncate w-full text-center px-1 font-bold">
                     {seat.student?.name}
-                    {(seat.status === 'MOVEMENT' || seat.status === 'OUTING') && (
+                    {(['MOVEMENT', 'OUTING', 'ABSENT', 'GUIDANCE', 'CHECKED'].includes(seat.status)) && (
                         <span className="block text-[8px] font-normal">{typeMap[seat.status] || seat.status}</span>
                     )}
                 </span>
@@ -86,7 +90,6 @@ const SeatComponent = memo(({ seat, onClick, guidanceMode, style }: { seat: Seat
     return prev.seat.id === next.seat.id &&
         prev.seat.status === next.seat.status &&
         prev.seat.student?.id === next.seat.student?.id &&
-        prev.guidanceMode === next.guidanceMode &&
         prev.seat.x === next.seat.x &&
         prev.seat.y === next.seat.y;
 });
@@ -97,10 +100,9 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     const [seats, setSeats] = useState<Seat[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
-    const [guidanceMode, setGuidanceMode] = useState(false);
     const [permissions, setPermissions] = useState<any[]>([]); // Student permissions
     const [loadingPerms, setLoadingPerms] = useState(false);
-    const [scale, setScale] = useState(1.2); // Increased default scale for better visibility
+    const [scale, setScale] = useState(1.0);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -167,6 +169,29 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
         }
     }, [isDragging]);
 
+    const updateStatus = async (type: string) => {
+        if (!selectedSeat?.student) return;
+        try {
+            const res = await fetch(`/api/teacher/rooms/${roomId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studentId: selectedSeat.student.id,
+                    type
+                })
+            });
+            if (res.ok) {
+                toast.success("상태가 업데이트되었습니다.");
+                fetchSeats(true);
+                setSelectedSeat(null);
+            } else {
+                toast.error("업데이트 실패");
+            }
+        } catch (e) {
+            toast.error("서버 연결 오류");
+        }
+    };
+
     const student = selectedSeat?.student;
 
     return (
@@ -176,19 +201,17 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                     <h2 className="font-semibold text-lg">좌석 현황</h2>
                     <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 whitespace-nowrap overflow-x-auto scrollbar-hide">
                         <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded mr-1"></div> 배정됨</span>
-                        <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></div> 부재중</span>
+                        <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></div> 부재/이동</span>
+                        <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-green-100 border border-green-300 rounded mr-1"></div> 확인됨</span>
                         <span className="flex items-center flex-shrink-0"><div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded mr-1"></div> 빈좌석</span>
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {/* Guidance Mode button removed by user request */}
                 </div>
             </div>
 
             <div className="relative border bg-white rounded-xl shadow-sm overflow-hidden h-[600px] w-full flex flex-col select-none">
                 {/* Zoom Controls Overlay */}
                 <div className="absolute top-4 right-4 z-50 flex gap-2 bg-white/80 p-1 rounded-lg backdrop-blur shadow border">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}><ZoomOut className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.max(0.2, s - 0.1))}><ZoomOut className="h-4 w-4" /></Button>
                     <span className="flex items-center justify-center text-xs w-8 font-mono">{Math.round(scale * 100)}%</span>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.min(2, s + 0.1))}><ZoomIn className="h-4 w-4" /></Button>
                 </div>
@@ -203,22 +226,22 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                 >
                     <div
                         className="relative origin-top-left transition-transform duration-200"
-                        style={{ transform: `scale(${scale})`, minWidth: '1000px', minHeight: '1000px' }}
+                        style={{ transform: `scale(${scale})`, minWidth: '1500px', minHeight: '1500px' }}
                     >
                         {isLoading ? (
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="flex flex-col items-center gap-2">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <Loader2 className="animate-spin h-8 w-8 text-primary" />
                                     <p className="text-sm text-gray-500">좌석 정보를 불러오는 중...</p>
                                 </div>
                             </div>
                         ) : (
                             seats.map((seat) => {
                                 const isSeat = seat.type === 'SEAT' || !seat.type;
-                                const width = (seat.width || 1) * 30;
-                                const height = (seat.height || 1) * 30;
-                                const left = (seat.x || 0) * 30;
-                                const top = (seat.y || 0) * 30;
+                                const width = (seat.width || 1) * 60; // Base size 60
+                                const height = (seat.height || 1) * 60;
+                                const left = (seat.x || 0) * 60;
+                                const top = (seat.y || 0) * 60;
 
                                 if (!isSeat) {
                                     return (
@@ -231,7 +254,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                                                 seat.type === 'DOOR' && "bg-amber-100 border border-amber-300 text-amber-700 rounded-sm",
                                                 seat.type === 'PILLAR' && "bg-stone-300 border border-stone-400 text-stone-700 rounded-sm"
                                             )}
-                                            style={{ left, top, width, height }}
+                                            style={{ left, top, width, height, fontSize: '12px' }}
                                         >
                                             {seat.type === 'WINDOW' && "창문"}
                                             {seat.type === 'DOOR' && "문"}
@@ -243,16 +266,8 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                                 return (
                                     <SeatComponent
                                         key={seat.id}
-                                        seat={{ ...seat, width, height, x: left / 60, y: top / 60 }} // Pass specialized props or just pass style? SeatComponent expects seat object.
-                                        // Actually SeatComponent calculates style internaly using x*60. We need to Override or Update SeatComponent.
-                                        // Let's refactor SeatComponent usage inline or update it. 
-                                        // Updating SeatComponent is better for clean code.
-                                        // For now, I will modify SeatComponent to accept style or just render it here since it's getting complex?
-                                        // Let's modify SeatComponent (below this block) or just refactor this loop to render direct div like SeatAssigner.
-                                        // Direct rendering is easier to handle scale/width changes right now.
+                                        seat={seat}
                                         onClick={handleSeatClick}
-                                        guidanceMode={guidanceMode}
-                                        // Extra props for render
                                         style={{ left, top, width, height }}
                                     />
                                 );
@@ -269,7 +284,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                     </DialogHeader>
 
                     {student ? (
-                        <Tabs defaultValue="student" className="w-full">
+                        <Tabs defaultValue="status" className="w-full">
                             <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="status">상태관리</TabsTrigger>
                                 <TabsTrigger value="student">학생정보</TabsTrigger>
@@ -278,19 +293,19 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
 
                             <TabsContent value="status" className="space-y-4 py-4">
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-green-50 hover:border-green-200">
+                                    <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-green-50 hover:border-green-200" onClick={() => updateStatus('CHECKED')}>
                                         <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                             <Check className="w-5 h-5" />
                                         </div>
                                         <span>확인됨</span>
                                     </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-red-50 hover:border-red-200">
+                                    <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-red-50 hover:border-red-200" onClick={() => updateStatus('ABSENT')}>
                                         <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
                                             <AlertCircle className="w-5 h-5" />
                                         </div>
                                         <span>자리에 없음</span>
                                     </Button>
-                                    <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-200">
+                                    <Button variant="outline" className="h-20 flex flex-col gap-2 hover:bg-yellow-50 hover:border-yellow-200" onClick={() => updateStatus('GUIDANCE')}>
                                         <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
                                             <Clock className="w-5 h-5" />
                                         </div>

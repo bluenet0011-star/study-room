@@ -52,12 +52,16 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-            <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 relative">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-blue-50 p-4 relative overflow-hidden">
+            {/* Abstract Background Shapes */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-100/50 rounded-full blur-3xl animate-pulse delay-700" />
+
+            <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-8 relative z-10 animate-in fade-in zoom-in duration-500">
                 <div className="absolute top-4 right-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
+                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100/50">
                                 <Bug className="w-4 h-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -76,40 +80,45 @@ function LoginForm() {
                 </div>
 
                 <div className="flex flex-col items-center mb-10">
-                    <h1 className="text-5xl font-black text-red-600 mb-2 tracking-tight">DGHS</h1>
-                    <p className="text-gray-500 text-base font-medium">학습 관리 시스템</p>
+                    <div className="w-16 h-16 bg-gradient-to-tr from-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-red-200 transform rotate-3">
+                        <GraduationCap className="w-8 h-8" />
+                    </div>
+                    <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">DGHS</h1>
+                    <p className="text-gray-500 text-sm font-medium tracking-wide uppercase">Study Room Management</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                        <Label htmlFor="loginId">아이디</Label>
+                        <Label htmlFor="loginId" className="text-xs font-semibold text-gray-500 ml-1">아이디</Label>
                         <Input
                             id="loginId"
                             type="text"
-                            placeholder="아이디를 입력하세요"
+                            placeholder="아이디 입력"
                             value={loginId}
                             onChange={(e) => setLoginId(e.target.value)}
                             disabled={loading}
                             required
+                            className="bg-gray-50/50 border-gray-200 focus:bg-white transition-all h-12"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="password">비밀번호</Label>
+                        <Label htmlFor="password" className="text-xs font-semibold text-gray-500 ml-1">비밀번호</Label>
                         <Input
                             id="password"
                             type="password"
-                            placeholder="비밀번호를 입력하세요"
+                            placeholder="비밀번호 입력"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
                             required
+                            className="bg-gray-50/50 border-gray-200 focus:bg-white transition-all h-12"
                         />
                     </div>
 
                     <Button
                         type="submit"
-                        className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-base"
+                        className="w-full h-12 bg-gray-900 hover:bg-black text-white font-medium text-base rounded-xl transition-all shadow-lg shadow-gray-200 hover:shadow-xl mt-4"
                         disabled={loading}
                     >
                         {loading ? (
@@ -122,6 +131,12 @@ function LoginForm() {
                         )}
                     </Button>
                 </form>
+
+                <div className="mt-8 text-center">
+                    <p className="text-xs text-gray-400">
+                        © 2024 Dongtan Global High School. All rights reserved.
+                    </p>
+                </div>
             </div>
         </div>
     );

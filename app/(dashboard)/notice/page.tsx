@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Search, PenSquare } from 'lucide-react';
+import { Search, PenSquare, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ interface Notice {
 
 export default function NoticePage() {
     const [notices, setNotices] = useState<Notice[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const { data: session } = useSession();
     const router = useRouter();
@@ -30,9 +31,14 @@ export default function NoticePage() {
     }, []);
 
     const fetchNotices = async (query = '') => {
-        const res = await fetch(`/api/notices?search=${query}`);
-        const data = await res.json();
-        setNotices(data.notices);
+        setIsLoading(true);
+        try {
+            const res = await fetch(`/api/notices?search=${query}`);
+            const data = await res.json();
+            setNotices(data.notices);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSearch = () => {
@@ -68,7 +74,12 @@ export default function NoticePage() {
                 </div>
             </div>
 
-            <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+            <div className="border rounded-lg bg-white shadow-sm overflow-hidden min-h-[200px] relative">
+                {isLoading && (
+                    <div className="absolute inset-0 z-10 bg-white/50 flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                )}
                 {/* Desktop View */}
                 <Table className="hidden md:table">
                     <TableHeader>

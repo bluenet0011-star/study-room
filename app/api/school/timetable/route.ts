@@ -4,7 +4,7 @@ import Timetable from 'comcigan-parser';
 const timetable = new Timetable();
 
 // Cache for School ID to avoid searching every time
-let cachedSchoolId: number | null = null;
+const cachedSchoolId: number | null = null;
 const SCHOOL_NAME = '동탄국제고등학교';
 const SCHOOL_CODE = 79731; // Dongtan International High School (Corrected Code)
 

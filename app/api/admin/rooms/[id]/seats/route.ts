@@ -58,7 +58,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                         x: seat.x,
                         y: seat.y,
                         type: seat.type || "SEAT",
-                        rotation: seat.rotation || 0
+                        rotation: seat.rotation || 0,
+                        width: seat.width || 1,
+                        height: seat.height || 1,
                     }
                 });
             } else {
@@ -69,7 +71,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                         y: seat.y,
                         label: seat.label,
                         type: seat.type,
-                        rotation: seat.rotation
+                        rotation: seat.rotation,
+                        width: seat.width,
+                        height: seat.height,
                     }
                 });
             }

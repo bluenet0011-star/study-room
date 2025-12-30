@@ -7,14 +7,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Users, QrCode, Upload, Download, Trash2 } from 'lucide-react';
+import { Plus, Users, QrCode, Upload, Download, Trash2, Search, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 interface StudentTarget {
     name: string;
-    studentId: string;
+    studentId: string; // This effectively stores the ID or LoginID depending on input
+}
+
+interface SearchStudent {
+    id: string;
+    loginId: string;
+    name: string;
+    grade: number;
+    class: number;
+    number: number;
 }
 
 export default function TeacherEventsPage() {
@@ -24,8 +33,16 @@ export default function TeacherEventsPage() {
 
     // Target List State
     const [targets, setTargets] = useState<StudentTarget[]>([]);
+
+    // Manual Tab
     const [manualName, setManualName] = useState('');
     const [manualId, setManualId] = useState('');
+
+    // Search Tab
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchStudent[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -73,13 +90,74 @@ export default function TeacherEventsPage() {
             toast.error("이름과 학번을 모두 입력해주세요.");
             return;
         }
+        // Check duplicate
+        if (targets.some(t => t.studentId === manualId)) {
+            toast.error("이미 목록에 있는 학번입니다.");
+            return;
+        }
         setTargets([...targets, { name: manualName, studentId: manualId }]);
         setManualName('');
         setManualId('');
     };
 
+    const addSearchTarget = (student: SearchStudent) => {
+        // Use loginId as the identifier for now, as that's usually the student ID/barcode
+        // Or should we use internal UUID? 
+        // EventTarget stores 'studentId' string. 
+        // If we use internal UUID, the Manual Entry of "10101" won't match.
+        // But for Search results, we have the UUID.
+        // Let's store the UUID if available, or LoginID.
+        // Actually, the backend schema for EventTarget has 'studentId' field. 
+        // It's just a string, not a relation key in the simplified version? 
+        // Let's check schema... EventTarget.studentId is String.
+        // Wait, schema says: studentId String. No relation in EventTarget definition?
+        // Let's re-read schema.
+
+        // model EventTarget { ... studentId String ... @@unique([eventId, studentId]) }
+        // It does NOT have a relation to User. It's just a stored ID string (likely '20230101' etc).
+        // However, EventAttendance HAS a relation to User via studentId (UUID).
+
+        // This creates a discrepancy. 
+        // If I upload "10101" as target, and student with loginId "10101" scans, 
+        // Attendance uses UUID. Target uses "10101".
+        // Comparison "Is this student in target list?" will be tricky if we mix UUIDs and LoginIDs.
+
+        // BEST PRACTICE: Use consistent ID.
+        // Since Manual Entry allows arbitrary strings (maybe names?), strictly matching is hard.
+        // BUT, for automated "Attendance Check Mode", we want to know "Who hasn't arrived?".
+        // That requires mapping Target -> Real User.
+
+        // DECISION: For Search results, use `student.id` (UUID) if we can visually map it back?
+        // OR use `student.loginId` to align with the "School ID" concept which is likely what manual entry would be.
+        // Let's use `loginId` for display purposes, but we might encounter issues if manual entry is just 'John'.
+        // Let's stick to `loginId` for the "studentId" field in Target, assuming it's the unique identifier users know (学番).
+
+        const idToStore = student.loginId;
+
+        if (targets.some(t => t.studentId === idToStore)) {
+            toast.info("이미 추가된 학생입니다.");
+            return;
+        }
+        setTargets([...targets, { name: student.name, studentId: idToStore }]);
+    };
+
     const removeTarget = (idx: number) => {
         setTargets(targets.filter((_, i) => i !== idx));
+    };
+
+    const searchStudents = async () => {
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        try {
+            const res = await fetch(`/api/admin/students/search?query=${encodeURIComponent(searchQuery)}`);
+            if (res.ok) {
+                setSearchResults(await res.json());
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,8 +172,6 @@ export default function TeacherEventsPage() {
             const ws = wb.Sheets[wsname];
             const data = XLSX.utils.sheet_to_json(ws) as any[];
 
-            // Map data assuming 'name' and 'studentId' (or common Korean headers)
-            // Flexible matching for headers: name/이름, studentId/id/학번
             const parsed: StudentTarget[] = [];
             data.forEach(row => {
                 const name = row['name'] || row['이름'] || row['Name'];
@@ -107,8 +183,10 @@ export default function TeacherEventsPage() {
             });
 
             if (parsed.length > 0) {
-                setTargets([...targets, ...parsed]);
-                toast.success(`${parsed.length}명 추가되었습니다.`);
+                // Filter duplicates
+                const newTargets = parsed.filter(p => !targets.some(t => t.studentId === p.studentId));
+                setTargets(prev => [...prev, ...newTargets]);
+                toast.success(`${newTargets.length}명 추가되었습니다. (중복 제외)`);
             } else {
                 toast.error("올바른 데이터를 찾을 수 없습니다. 템플릿을 확인해주세요.");
             }
@@ -152,8 +230,9 @@ export default function TeacherEventsPage() {
                                 <Label>참여 학생 명단 (선택)</Label>
                                 <div className="border rounded-md p-4 bg-gray-50">
                                     <Tabs defaultValue="manual" className="w-full">
-                                        <TabsList className="grid w-full grid-cols-2">
+                                        <TabsList className="grid w-full grid-cols-3">
                                             <TabsTrigger value="manual">직접 입력</TabsTrigger>
+                                            <TabsTrigger value="search">학생 검색</TabsTrigger>
                                             <TabsTrigger value="excel">엑셀 업로드</TabsTrigger>
                                         </TabsList>
 
@@ -162,6 +241,42 @@ export default function TeacherEventsPage() {
                                                 <Input placeholder="이름" value={manualName} onChange={e => setManualName(e.target.value)} className="flex-1" />
                                                 <Input placeholder="학번/ID" value={manualId} onChange={e => setManualId(e.target.value)} className="flex-1" />
                                                 <Button onClick={addManualTarget} variant="secondary">추가</Button>
+                                            </div>
+                                        </TabsContent>
+
+                                        <TabsContent value="search" className="space-y-4 pt-4">
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                                                    <Input
+                                                        placeholder="이름 검색..."
+                                                        className="pl-9"
+                                                        value={searchQuery}
+                                                        onChange={e => setSearchQuery(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && searchStudents()}
+                                                    />
+                                                </div>
+                                                <Button onClick={searchStudents} variant="secondary" disabled={isSearching}>
+                                                    {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "검색"}
+                                                </Button>
+                                            </div>
+
+                                            <div className="max-h-[150px] overflow-y-auto border rounded bg-white">
+                                                {searchResults.length === 0 ? (
+                                                    <div className="p-4 text-center text-xs text-gray-400">검색 결과가 없습니다.</div>
+                                                ) : (
+                                                    <div className="divide-y">
+                                                        {searchResults.map(s => (
+                                                            <div key={s.id} className="flex justify-between items-center p-2 text-sm hover:bg-gray-50 cursor-pointer" onClick={() => addSearchTarget(s)}>
+                                                                <div>
+                                                                    <span className="font-bold mr-2">{s.name}</span>
+                                                                    <span className="text-gray-500 text-xs">{s.grade}-{s.class}-{s.number} ({s.loginId})</span>
+                                                                </div>
+                                                                <Button size="sm" variant="ghost" className="h-6 text-xs text-blue-600">추가</Button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </TabsContent>
 

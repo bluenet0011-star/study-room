@@ -33,6 +33,7 @@ interface Permission {
     reason: string;
     location?: string;
     teacher: { id: string; name: string } | null;
+    createdAt: string; // Added field
 }
 
 export default function StatusPage() {
@@ -41,6 +42,7 @@ export default function StatusPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('ALL'); // Filter state
 
     useEffect(() => {
         fetchPermissions();
@@ -50,7 +52,14 @@ export default function StatusPage() {
     }, []);
 
     const fetchPermissions = () => {
-        fetch('/api/student/permissions').then(res => res.json()).then(setPermissions);
+        // Assuming backend sends createdAt. If not, sorting might rely on ID or Start time.
+        fetch('/api/student/permissions').then(res => res.json()).then(data => {
+            // Sort by createdAt desc locally if not sorted by backend
+            const sorted = data.sort((a: any, b: any) =>
+                new Date(b.createdAt || b.start).getTime() - new Date(a.createdAt || a.start).getTime()
+            );
+            setPermissions(sorted);
+        });
     };
 
     const getStatusColor = (status: string) => {
@@ -118,9 +127,20 @@ export default function StatusPage() {
         setLoading(false);
     };
 
+    const filteredPermissions = permissions.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
+
     return (
         <div className="p-4 md:p-6 w-full max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">내 신청 현황</h1>
+
+            {/* Filters */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                <Button variant={statusFilter === 'ALL' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('ALL')}>전체</Button>
+                <Button variant={statusFilter === 'PENDING' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('PENDING')}>대기중</Button>
+                <Button variant={statusFilter === 'APPROVED' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('APPROVED')}>승인됨</Button>
+                <Button variant={statusFilter === 'REJECTED' ? 'default' : 'outline'} size="sm" onClick={() => setStatusFilter('REJECTED')}>반려됨</Button>
+            </div>
+
             <div className="space-y-4">
                 <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
                     {/* Desktop View */}
@@ -135,14 +155,14 @@ export default function StatusPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {permissions.length === 0 && (
+                            {filteredPermissions.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center text-gray-500">
                                         신청 내역이 없습니다.
                                     </TableCell>
                                 </TableRow>
                             )}
-                            {permissions.map(p => (
+                            {filteredPermissions.map(p => (
                                 <TableRow key={p.id}>
                                     <TableCell className="text-center">
                                         <Badge variant="outline" className="text-xs whitespace-nowrap">
@@ -150,9 +170,15 @@ export default function StatusPage() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-center text-sm">
-                                        <div className="flex flex-col">
-                                            <span className="font-medium text-gray-900">{format(new Date(p.start), 'MM.dd(eee) HH:mm', { locale: ko })}</span>
-                                            <span className="text-gray-500 text-xs">~ {format(new Date(p.end), 'HH:mm', { locale: ko })}</span>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="flex items-center gap-1 text-gray-900">
+                                                <span className="font-semibold w-8 text-right text-xs text-gray-500">시작</span>
+                                                <span>{format(new Date(p.start), 'MM.dd HH:mm', { locale: ko })}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-gray-900">
+                                                <span className="font-semibold w-8 text-right text-xs text-gray-500">종료</span>
+                                                <span>{format(new Date(p.end), 'MM.dd HH:mm', { locale: ko })}</span>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -174,9 +200,9 @@ export default function StatusPage() {
                                                     <Edit2 className="w-3 h-3" />
                                                 </Button>
                                                 <Button size="sm" variant="ghost" onClick={async () => {
-                                                    if (!confirm('신청을 취소하시겠습니까?')) return;
+                                                    if (!window.confirm('정말 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.')) return;
                                                     await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
-                                                    setPermissions(permissions.filter(perm => perm.id !== p.id));
+                                                    setPermissions(prev => prev.filter(perm => perm.id !== p.id));
                                                 }} className="h-6 w-6 p-0 hover:text-red-600">
                                                     <Trash2 className="w-3 h-3" />
                                                 </Button>
@@ -185,9 +211,9 @@ export default function StatusPage() {
                                         {p.status === 'APPROVED' && (
                                             <div className="flex justify-center mt-2">
                                                 <Button size="sm" variant="ghost" onClick={async () => {
-                                                    if (!confirm('신청을 취소하시겠습니까?')) return;
+                                                    if (!window.confirm('이미 승인된 신청입니다. 정말 취소하시겠습니까?')) return;
                                                     await fetch(`/api/student/permissions/${p.id}`, { method: 'DELETE' });
-                                                    setPermissions(permissions.filter(perm => perm.id !== p.id));
+                                                    setPermissions(prev => prev.filter(perm => perm.id !== p.id));
                                                 }} className="h-6 w-6 p-0 hover:text-red-600">
                                                     <X className="w-3 h-3" />
                                                 </Button>
@@ -201,12 +227,12 @@ export default function StatusPage() {
 
                     {/* Mobile View */}
                     <div className="md:hidden divide-y">
-                        {permissions.length === 0 && (
+                        {filteredPermissions.length === 0 && (
                             <div className="p-8 text-center text-gray-500">
                                 신청 내역이 없습니다.
                             </div>
                         )}
-                        {permissions.map(p => (
+                        {filteredPermissions.map(p => (
                             <div key={p.id} className="p-4 space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-2">

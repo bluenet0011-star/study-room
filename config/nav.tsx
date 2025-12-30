@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, DoorOpen, CalendarCheck, FileText, QrCode, Clock, Search, CreditCard, Megaphone } from "lucide-react";
+import { LayoutDashboard, Users, DoorOpen, CalendarCheck, FileText, QrCode, Clock, Search, CreditCard, Megaphone, TreeDeciduous } from "lucide-react";
 
 export const NAV_LINKS = [
     // Common
@@ -104,6 +104,13 @@ export const NAV_LINKS = [
         roles: ["ADMIN", "TEACHER", "STUDENT"],
         description: "습득물 및 분실물을 등록하고 확인합니다."
     },
+    {
+        name: "건의함",
+        href: "/common/suggestions",
+        icon: Megaphone,
+        roles: ["ADMIN", "TEACHER", "STUDENT"],
+        description: "학교 생활에 대한 건의사항을 남깁니다."
+    },
 
     // Admin Specific
     {
@@ -114,10 +121,17 @@ export const NAV_LINKS = [
         description: "자습실을 생성하고 좌석 배치를 편집합니다."
     },
     {
-        name: "학생 관리",
+        name: "계정 관리",
         href: "/admin/users",
         icon: Users,
         roles: ["ADMIN"],
         description: "학생 및 교사 계정을 생성하고 관리합니다."
+    },
+    {
+        name: "동탄국제고 링크트리",
+        href: "https://linktr.ee/dghs_student",
+        icon: TreeDeciduous,
+        roles: ["TEACHER", "STUDENT"],
+        description: "학교 관련 주요 링크를 확인합니다."
     },
 ];

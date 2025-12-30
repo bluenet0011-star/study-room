@@ -9,7 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Search, Lock, Edit } from 'lucide-react';
+import { Search, Lock, Edit, Trash2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Student {
     id: string;
@@ -28,6 +38,8 @@ export default function TeacherStudentsPage() {
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [newPassword, setNewPassword] = useState('');
+    const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
     useEffect(() => {
         fetch('/api/users/students').then(res => res.json()).then(data => {
@@ -52,7 +64,7 @@ export default function TeacherStudentsPage() {
 
         try {
             const res = await fetch(`/api/admin/users/${editingStudent.id}`, {
-                method: 'PATCH', // Reusing admin API if permitted, or create teacher specific
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(editingStudent)
             });
@@ -76,7 +88,7 @@ export default function TeacherStudentsPage() {
         if (!selectedStudentId || !newPassword) return;
 
         try {
-            const res = await fetch(`/api/admin/users/${selectedStudentId}/password`, { // Need to ensure this API exists or create it
+            const res = await fetch(`/api/admin/users/${selectedStudentId}/password`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: newPassword })
@@ -91,6 +103,37 @@ export default function TeacherStudentsPage() {
             }
         } catch (e) {
             toast.error('오류 발생');
+        }
+    };
+
+    const confirmDelete = (student: Student) => {
+        setStudentToDelete(student);
+        setDeleteAlertOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!studentToDelete) return;
+
+        try {
+            const res = await fetch(`/api/admin/users/${studentToDelete.id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                toast.success('학생이 삭제되었습니다.');
+                // Refresh
+                const refreshed = await fetch('/api/users/students').then(r => r.json());
+                setStudents(refreshed);
+                handleSearch(search);
+            } else {
+                const data = await res.json();
+                toast.error(data.error || '삭제 실패');
+            }
+        } catch (error) {
+            toast.error('삭제 요청 중 오류가 발생했습니다.');
+        } finally {
+            setDeleteAlertOpen(false);
+            setStudentToDelete(null);
         }
     };
 
@@ -173,7 +216,10 @@ export default function TeacherStudentsPage() {
                                                     <Edit className="w-3 h-3 mr-1" /> 정보수정
                                                 </Button>
                                                 <Button size="sm" variant="outline" onClick={() => { setSelectedStudentId(student.id); setPasswordModalOpen(true); }}>
-                                                    <Lock className="w-3 h-3 mr-1" /> 비번변경
+                                                    <Lock className="w-3 h-3 mr-1" /> 비번
+                                                </Button>
+                                                <Button size="sm" variant="destructive" onClick={() => confirmDelete(student)}>
+                                                    <Trash2 className="w-3 h-3 mr-1" /> 삭제
                                                 </Button>
                                             </>
                                         )}
@@ -236,12 +282,15 @@ export default function TeacherStudentsPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" className="flex-1 h-9" onClick={() => setEditingStudent(student)}>
-                                            <Edit className="w-3 h-3 mr-1" /> 정보수정
+                                    <div className="flex gap-2 text-xs">
+                                        <Button size="sm" variant="outline" className="flex-1 h-9 px-0" onClick={() => setEditingStudent(student)}>
+                                            <Edit className="w-3 h-3 mr-1" /> 수정
                                         </Button>
-                                        <Button size="sm" variant="outline" className="flex-1 h-9" onClick={() => { setSelectedStudentId(student.id); setPasswordModalOpen(true); }}>
-                                            <Lock className="w-3 h-3 mr-1" /> 비번변경
+                                        <Button size="sm" variant="outline" className="flex-1 h-9 px-0" onClick={() => { setSelectedStudentId(student.id); setPasswordModalOpen(true); }}>
+                                            <Lock className="w-3 h-3 mr-1" /> 비번
+                                        </Button>
+                                        <Button size="sm" variant="destructive" className="flex-1 h-9 px-0" onClick={() => confirmDelete(student)}>
+                                            <Trash2 className="w-3 h-3 mr-1" /> 삭제
                                         </Button>
                                     </div>
                                 )}
@@ -273,6 +322,21 @@ export default function TeacherStudentsPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setPasswordModalOpen(false)}>취소</Button>
                         <Button onClick={handlePasswordReset}>변경하기</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>학생을 삭제하시겠습니까?</DialogTitle>
+                        <DialogDescription>
+                            {studentToDelete?.name} ({studentToDelete?.grade}-{studentToDelete?.class}-{studentToDelete?.number}) 학생의 계정을 완전히 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setDeleteAlertOpen(false)}>취소</Button>
+                        <Button variant="destructive" onClick={handleDelete}>삭제</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

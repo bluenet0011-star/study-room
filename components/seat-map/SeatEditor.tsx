@@ -25,6 +25,8 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     const [drawMode, setDrawMode] = useState<'NONE' | 'WALL'>('NONE');
     const [drawStart, setDrawStart] = useState<{ x: number, y: number } | null>(null);
     const [drawPreview, setDrawPreview] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+    const [selectionBox, setSelectionBox] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+    const [isSelecting, setIsSelecting] = useState(false);
 
     // Label Editing State
     const [editingSeatId, setEditingSeatId] = useState<string | null>(null);
@@ -71,7 +73,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                 return seat;
             });
 
-            // Basic bounds check (optional)
             return newSeats;
         });
     };
@@ -86,6 +87,10 @@ export function SeatEditor({ roomId }: { roomId: string }) {
             });
             if (res.ok) {
                 toast.success("배치가 성공적으로 저장되었습니다.");
+                // Reload to get real IDs to prevent duplicates on next save
+                const refresh = await fetch(`/api/admin/rooms/${roomId}/seats`);
+                const data = await refresh.json();
+                setSeats(data.map((s: any) => ({ ...s, width: s.width || 1, height: s.height || 1 })));
             } else {
                 toast.error("저장 중 오류가 발생했습니다.");
             }
@@ -105,7 +110,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     };
 
     const addNode = (type: string) => {
-        // Normal add node (1x1)
         const id = `new-${Date.now()}`;
         let label = '';
         if (type === 'SEAT') label = getNextLabel(seats);
@@ -119,14 +123,21 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     const handleCanvasMouseDown = (e: React.MouseEvent) => {
         if (drawMode === 'WALL') {
             const rect = e.currentTarget.getBoundingClientRect();
-            // Calculate relative x, y in grid units
             const x = Math.floor((e.clientX - rect.left) / (gridSize * scale));
             const y = Math.floor((e.clientY - rect.top) / (gridSize * scale));
             setDrawStart({ x, y });
             setDrawPreview({ x, y, w: 1, h: 1 });
         } else {
-            // Deselect on bg click
-            setSelectedIds([]);
+            // Lasso Selection Start
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Store raw pixels for lasso relative to container
+            setDrawStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+            setIsSelecting(true);
+            setSelectionBox({ x: e.clientX - rect.left, y: e.clientY - rect.top, w: 0, h: 0 });
+
+            if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                setSelectedIds([]);
+            }
         }
     };
 
@@ -142,13 +153,23 @@ export function SeatEditor({ roomId }: { roomId: string }) {
             const y = Math.min(currentY, drawStart.y);
 
             setDrawPreview({ x, y, w, h });
+        } else if (isSelecting && drawStart) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+
+            const x = Math.min(currentX, drawStart.x);
+            const y = Math.min(currentY, drawStart.y);
+            const w = Math.abs(currentX - drawStart.x);
+            const h = Math.abs(currentY - drawStart.y);
+
+            setSelectionBox({ x, y, w, h });
         }
     };
 
     const handleCanvasMouseUp = () => {
         if (drawMode === 'WALL' && drawStart && drawPreview) {
-            // Create Wall
-            const id = `wall-${Date.now()}`;
+            const id = `new-wall-${Date.now()}`;
             setSeats(prev => [...prev, {
                 id,
                 x: drawPreview.x,
@@ -162,10 +183,44 @@ export function SeatEditor({ roomId }: { roomId: string }) {
             }]);
             setDrawStart(null);
             setDrawPreview(null);
-            setDrawMode('NONE'); // Exit draw mode after one wall? Or keep? Let's keep for utility or exit. User says "Drag Rectangle". Usually implies one-off or tool toggle. Let's toggle off for safety.
+            setDrawMode('NONE');
+        } else if (isSelecting && selectionBox) {
+            const newSelected: string[] = [];
+
+            seats.forEach(s => {
+                const sx = s.x * gridSize * scale;
+                const sy = s.y * gridSize * scale;
+                const sw = s.width * gridSize * scale;
+                const sh = s.height * gridSize * scale;
+
+                // Check AABB intersection
+                // selectionBox is in scaled pixels (relative to container) if we consider scale in calculation?
+                // Wait. selectionBox derived from clientX - rect.left. This IS unscaled screen pixels inside container.
+                // The seat coordinates (sx, sy, sw, sh) are multiplied by scale.
+                // So they match!
+
+                if (
+                    selectionBox.x < sx + sw &&
+                    selectionBox.x + selectionBox.w > sx &&
+                    selectionBox.y < sy + sh &&
+                    selectionBox.y + selectionBox.h > sy
+                ) {
+                    newSelected.push(s.id);
+                }
+            });
+
+            setSelectedIds(prev => {
+                // Determine if we are adding (Shift/Ctrl) or just setting.
+                // We checked modifiers in MouseDown. If no modifier, we cleared selectedIds.
+                // So we can just add newSelected to whatever is there (which is empty if no modifier, or existing if modifier).
+                return [...new Set([...prev, ...newSelected])];
+            });
+
+            setIsSelecting(false);
+            setSelectionBox(null);
+            setDrawStart(null);
         }
     };
-
 
     const handleSeatClick = (id: string, e: React.MouseEvent) => {
         if (e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -193,7 +248,6 @@ export function SeatEditor({ roomId }: { roomId: string }) {
         setSelectedIds([]);
     };
 
-    // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -211,7 +265,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                 setSeats(prev => {
                     let nextLabelNum = parseInt(getNextLabel(prev));
                     const newSeats = copyBuffer.map((s, idx) => {
-                        const newId = `copy-${Date.now()}-${idx}`;
+                        const newId = `new-copy-${Date.now()}-${idx}`;
                         let newLabel = s.label;
                         if (s.type === 'SEAT') newLabel = (nextLabelNum++).toString();
                         return { ...s, id: newId, x: s.x + offset, y: s.y + offset, label: newLabel, isNew: true };
@@ -284,39 +338,37 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                         sensors={sensors}
                         onDragEnd={handleDragEnd}
                         onDragStart={(e) => {
-                            if (drawMode === 'WALL') return; // Disable drag while drawing
+                            if (drawMode === 'WALL' || isSelecting) return;
                             if (!selectedIds.includes(e.active.id as string)) {
                                 const event = e.activatorEvent as MouseEvent;
                                 if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
                                     setSelectedIds([e.active.id as string]);
                                 } else {
-                                    // If modifier held and not selected, add to selection?
-                                    // Actually dragging implicitly selects to move.
-                                    // But if we just want to ADD to selection and move together...
-                                    // The logic below 'setSelectedIds' replaces selection.
-                                    // We want to ADD.
                                     setSelectedIds(prev => [...prev, e.active.id as string]);
                                 }
                             }
                         }}
                         modifiers={[snapToGrid]}
                     >
-                        {seats.map((seat: any) => (
-                            <div
-                                key={seat.id}
-                                onClick={(e) => { e.stopPropagation(); handleSeatClick(seat.id, e); }}
-                                className="absolute"
-                            >
-                                <DraggableSeat
-                                    {...seat}
-                                    isSelected={selectedIds.includes(seat.id)}
-                                    onDoubleClick={() => handleDoubleClick(seat)}
-                                />
-                            </div>
-                        ))}
+                        {/* Z-index Sort: Wall first, then others */}
+                        {seats
+                            .sort((a, b) => (a.type === 'WALL' ? -1 : 1) - (b.type === 'WALL' ? -1 : 1))
+                            .map((seat: any) => (
+                                <div
+                                    key={seat.id}
+                                    onClick={(e) => { e.stopPropagation(); handleSeatClick(seat.id, e); }}
+                                    className="absolute"
+                                >
+                                    <DraggableSeat
+                                        {...seat}
+                                        isSelected={selectedIds.includes(seat.id)}
+                                        onDoubleClick={() => handleDoubleClick(seat)}
+                                    />
+                                </div>
+                            ))}
                     </DndContext>
 
-                    {/* Draw Preview */}
+                    {/* Draw Preview for Wall */}
                     {drawPreview && (
                         <div
                             className="absolute border-2 border-gray-900 bg-gray-800/50 z-50 pointer-events-none"
@@ -328,12 +380,24 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                             }}
                         />
                     )}
+                    {/* Selection Box for Lasso */}
+                    {selectionBox && (
+                        <div
+                            className="absolute border border-blue-500 bg-blue-500/20 z-[60] pointer-events-none"
+                            style={{
+                                left: selectionBox.x / scale,
+                                top: selectionBox.y / scale,
+                                width: selectionBox.w / scale,
+                                height: selectionBox.h / scale,
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 
             <div className="text-xs text-gray-400 text-right flex justify-between px-2">
                 <span>
-                    {drawMode === 'WALL' ? "드래그하여 벽을 생성하세요." : "팁: Shift+Click 다중 선택 | 드래그하여 이동 | Ctrl+C/V 복사/붙여넣기"}
+                    {drawMode === 'WALL' ? "드래그하여 벽을 생성하세요." : "팁: Shift+Click 다중 선택 | 드래그하여 이동/선택 | Ctrl+C/V 복사/붙여넣기"}
                 </span>
                 <span>
                     더블클릭: 수정 | Delete: 삭제
