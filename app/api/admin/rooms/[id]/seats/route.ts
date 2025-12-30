@@ -81,8 +81,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             }
         });
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("Seat Save Error:", error);
+    } catch (error: any) {
+        console.error("Seat Save Error Details:", error);
+        // Log more specific Prisma error info if available
+        if (error.code) console.error("Prisma Error Code:", error.code);
+        if (error.meta) console.error("Prisma Error Meta:", error.meta);
         return new NextResponse("Failed to save seats", { status: 500 });
     }
 }

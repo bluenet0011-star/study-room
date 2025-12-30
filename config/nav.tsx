@@ -106,13 +106,7 @@ export const NAV_LINKS = [
         roles: ["ADMIN", "TEACHER", "STUDENT"],
         description: "습득물 및 분실물을 등록하고 확인합니다."
     },
-    {
-        name: "건의함",
-        href: "/common/suggestions",
-        icon: Megaphone,
-        roles: ["ADMIN", "TEACHER", "STUDENT"],
-        description: "학교 생활에 대한 건의사항을 남깁니다."
-    },
+
 
     // Admin Specific
     {

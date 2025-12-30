@@ -47,9 +47,9 @@ export default function NoticePage() {
 
     return (
         <div className="p-4 md:p-6 max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col items-start gap-4 md:flex-row md:justify-between md:items-center mb-6">
                 <h1 className="text-2xl font-bold">공지사항</h1>
-                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row">
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
@@ -60,7 +60,7 @@ export default function NoticePage() {
                             className="pl-8"
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full md:w-auto">
                         <Button onClick={handleSearch} className="flex-1 md:flex-none">검색</Button>
                         {(session?.user?.role === 'ADMIN' || session?.user?.role === 'TEACHER') && (
                             <Link href="/notice/write" className="flex-1 md:flex-none">

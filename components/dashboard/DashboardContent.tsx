@@ -29,12 +29,19 @@ async function getStudentStats(studentId: string) {
         include: { seat: { include: { room: true } } }
     });
 
-    // Active Permission
+    // Active Permission (Today Only)
+    const now = new Date();
+    const todayStart = new Date(now.setHours(0, 0, 0, 0));
+    const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+
     const permissions = await prisma.permission.findMany({
         where: {
             studentId,
             status: { in: ['PENDING', 'APPROVED'] },
-            start: { gte: new Date() } // Future permissions
+            start: {
+                gte: new Date(), // From now
+                lte: todayEnd    // Until end of today
+            }
         },
         orderBy: { start: 'asc' },
         take: 2
@@ -143,16 +150,16 @@ export default async function DashboardContent() {
             </div>
 
             {/* Widgets Section */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {/* Role Specific Stats */}
                 {role === 'STUDENT' && studentData && (
                     <>
                         <Card className="bg-gradient-to-br from-red-50 to-white border-red-100 shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-red-900">내 권한</CardTitle>
+                                <CardTitle className="text-sm font-medium text-red-900">내 퍼미션</CardTitle>
                                 <CheckCircle2 className="h-4 w-4 text-red-500" />
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
                                 <div className="text-2xl font-bold text-red-700">
                                     {studentData.permissions.filter(p => p.status === 'PENDING').length} / {studentData.permissions.filter(p => p.status === 'APPROVED').length}
                                 </div>
@@ -164,7 +171,7 @@ export default async function DashboardContent() {
                                 <CardTitle className="text-sm font-medium text-red-900">다음 일정</CardTitle>
                                 <Clock className="h-4 w-4 text-red-500" />
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
                                 {studentData.permissions.length > 0 ? (
                                     <>
                                         <div className="text-lg font-bold text-red-700 truncate">
@@ -193,7 +200,7 @@ export default async function DashboardContent() {
                                 <CardTitle className="text-sm font-medium text-red-900">결재 대기</CardTitle>
                                 <CheckCircle2 className="h-4 w-4 text-red-500" />
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
                                 <div className="text-2xl font-bold text-red-700">{teacherData.pendingPermissions}건</div>
                                 <p className="text-xs text-red-600/80 mt-1">우리 반 승인 대기</p>
                             </CardContent>
@@ -203,7 +210,7 @@ export default async function DashboardContent() {
                                 <CardTitle className="text-sm font-medium text-red-900">오늘의 행사</CardTitle>
                                 <Calendar className="h-4 w-4 text-red-500" />
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
                                 <div className="text-lg font-bold text-red-700 truncate" title={teacherData.todayEventsTitles}>
                                     {teacherData.todayEventsCount > 0 ? teacherData.todayEventsTitles : "없음"}
                                 </div>
@@ -214,7 +221,7 @@ export default async function DashboardContent() {
                 )}
 
                 {/* Notices Widget (Spans 2 cols on large, or full width) */}
-                <Card className="col-span-1 md:col-span-2 shadow-sm">
+                <Card className="col-span-2 md:col-span-2 shadow-sm">
                     <CardHeader className="pb-2">
                         <div className="flex justify-between items-center">
                             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -251,17 +258,17 @@ export default async function DashboardContent() {
             {/* Quick Links Grid */}
             <div>
                 <h2 className="text-lg font-semibold mb-4 text-gray-800">바로가기</h2>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {filteredLinks.map((link) => (
                         <Link key={link.href} href={link.href} className="group">
                             <Card className="h-full hover:border-red-500/50 hover:shadow-md transition-all duration-300">
-                                <CardContent className="p-6 flex flex-col items-center text-center space-y-3">
-                                    <div className="p-3 rounded-full bg-gray-50 group-hover:bg-red-50 transition-colors">
-                                        <link.icon className="h-6 w-6 text-gray-500 group-hover:text-red-600 transition-colors" />
+                                <CardContent className="p-3 md:p-6 flex flex-col items-center text-center space-y-2 md:space-y-3">
+                                    <div className="p-2 md:p-3 rounded-full bg-gray-50 group-hover:bg-red-50 transition-colors">
+                                        <link.icon className="h-5 w-5 md:h-6 md:w-6 text-red-500 group-hover:text-red-600 transition-colors" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 group-hover:text-red-700">{link.name}</h3>
-                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{link.description}</p>
+                                        <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-red-700">{link.name}</h3>
+                                        <p className="text-[10px] md:text-xs text-gray-500 mt-1 line-clamp-1 md:line-clamp-2">{link.description}</p>
                                     </div>
                                 </CardContent>
                             </Card>

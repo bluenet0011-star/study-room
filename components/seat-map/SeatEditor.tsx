@@ -80,10 +80,23 @@ export function SeatEditor({ roomId }: { roomId: string }) {
     const handleSave = async () => {
         setSaving(true);
         try {
+            // Sanitize and ensure defaults
+            const sanitizedSeats = seats.map(s => ({
+                id: s.id,
+                roomId,
+                label: s.label || '',
+                x: s.x || 0,
+                y: s.y || 0,
+                type: s.type || 'SEAT',
+                rotation: s.rotation || 0,
+                width: s.width || 1,
+                height: s.height || 1
+            }));
+
             const res = await fetch(`/api/admin/rooms/${roomId}/seats`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ seats })
+                body: JSON.stringify({ seats: sanitizedSeats })
             });
             if (res.ok) {
                 toast.success("배치가 성공적으로 저장되었습니다.");
