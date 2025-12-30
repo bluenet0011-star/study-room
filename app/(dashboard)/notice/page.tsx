@@ -123,11 +123,11 @@ export default function NoticePage() {
                             onClick={() => router.push(`/notice/${notice.id}`)}
                         >
                             <div className="flex items-start justify-between mb-2">
-                                <div className="flex flex-col gap-1">
+                                <div className="flex flex-col gap-1 flex-1 min-w-0 mr-2">
                                     {notice.important && (
                                         <Badge variant="destructive" className="w-fit text-[10px] mb-1">중요</Badge>
                                     )}
-                                    <h3 className="font-medium text-base truncate pr-2">{notice.title}</h3>
+                                    <h3 className="font-medium text-base truncate">{notice.title}</h3>
                                 </div>
                                 <span className={cn("text-xs text-gray-400 whitespace-nowrap ml-2", !notice.important && "mt-1")}>
                                     {format(new Date(notice.createdAt), 'MM.dd')}

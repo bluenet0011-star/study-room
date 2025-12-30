@@ -28,19 +28,22 @@ export const DraggableSeat = React.memo(function DraggableSeat({ id, x, y, width
             {...attributes}
             onDoubleClick={onDoubleClick}
             className={cn(
-                "flex items-center justify-center cursor-move shadow-sm select-none z-10 hover:shadow-md hover:border-blue-400 font-bold text-sm transition-all",
-                type === 'SEAT' && "bg-white border border-gray-300 rounded", // Removed fixed w/h
-                type === 'WINDOW' && "bg-blue-200 border-2 border-blue-400 z-0",
-                type === 'DOOR' && "bg-amber-800/20 border-2 border-amber-800 rounded-sm z-0",
-                type === 'WALL' && "bg-gray-800 border-2 border-gray-900 z-0",
+                "flex items-center justify-center cursor-move shadow-sm select-none transition-all font-bold text-xs",
+                "z-10", // Default Z-index
+                type === 'SEAT' && "bg-white border border-gray-300 rounded text-black",
+                type === 'WINDOW' && "bg-blue-100 border border-blue-300 text-blue-600 rounded-sm",
+                type === 'DOOR' && "bg-amber-100 border border-amber-300 text-amber-700 rounded-sm",
+                type === 'PILLAR' && "bg-stone-300 border border-stone-400 text-stone-700 rounded-sm", // Concrete look
+                type === 'WALL' && "bg-gray-800 border-2 border-gray-900 z-0", // Wall behind
                 isNew && "border-blue-500 bg-blue-50 ring-2 ring-blue-200",
-                "data-[selected=true]:ring-2 data-[selected=true]:ring-primary data-[selected=true]:z-20"
+                "data-[selected=true]:ring-2 data-[selected=true]:ring-primary data-[selected=true]:z-30"
             )}
             data-selected={isSelected}
         >
             {type === 'SEAT' && label}
-            {type === 'WINDOW' && <div className="w-full h-1 bg-blue-400/50" />}
-            {type === 'DOOR' && <div className="w-1/2 h-full border-r-2 border-dashed border-amber-800/50" />}
+            {type === 'WINDOW' && "창문"}
+            {type === 'DOOR' && "문"}
+            {type === 'PILLAR' && "기둥"}
         </div>
     );
 });

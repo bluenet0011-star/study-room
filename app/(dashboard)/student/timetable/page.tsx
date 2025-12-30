@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { TimetableGrid } from '@/components/student/TimetableGrid';
 
+export const dynamic = 'force-dynamic';
+
 export default async function TimetablePage() {
     let user;
     try {

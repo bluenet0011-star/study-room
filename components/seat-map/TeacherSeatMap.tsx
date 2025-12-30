@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -100,7 +100,32 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     const [guidanceMode, setGuidanceMode] = useState(false);
     const [permissions, setPermissions] = useState<any[]>([]); // Student permissions
     const [loadingPerms, setLoadingPerms] = useState(false);
-    const [scale, setScale] = useState(1);
+    const [scale, setScale] = useState(1.2); // Increased default scale for better visibility
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+    const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!containerRef.current) return;
+        setIsDragging(true);
+        setPanStart({ x: e.clientX, y: e.clientY });
+        setScrollStart({ x: containerRef.current.scrollLeft, y: containerRef.current.scrollTop });
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging || !containerRef.current) return;
+        e.preventDefault();
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+        containerRef.current.scrollLeft = scrollStart.x - dx;
+        containerRef.current.scrollTop = scrollStart.y - dy;
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
 
     const fetchSeats = useCallback(async (isBackground = false) => {
         if (!isBackground) setIsLoading(true);
@@ -124,6 +149,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     }, [fetchSeats]);
 
     const handleSeatClick = useCallback(async (seat: Seat) => {
+        if (isDragging) return; // Prevent click on drag
         setSelectedSeat(seat);
         if (seat.student) {
             setLoadingPerms(true);
@@ -139,7 +165,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
         } else {
             setPermissions([]);
         }
-    }, []);
+    }, [isDragging]);
 
     const student = selectedSeat?.student;
 
@@ -159,7 +185,7 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                 </div>
             </div>
 
-            <div className="relative border bg-white rounded-xl shadow-sm overflow-hidden h-[600px] w-full flex flex-col">
+            <div className="relative border bg-white rounded-xl shadow-sm overflow-hidden h-[600px] w-full flex flex-col select-none">
                 {/* Zoom Controls Overlay */}
                 <div className="absolute top-4 right-4 z-50 flex gap-2 bg-white/80 p-1 rounded-lg backdrop-blur shadow border">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}><ZoomOut className="h-4 w-4" /></Button>
@@ -167,7 +193,14 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setScale(s => Math.min(2, s + 0.1))}><ZoomIn className="h-4 w-4" /></Button>
                 </div>
 
-                <div className="flex-1 overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] relative cursor-grab active:cursor-grabbing p-10">
+                <div
+                    ref={containerRef}
+                    className="flex-1 overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] relative cursor-grab active:cursor-grabbing p-10 overscroll-none"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                >
                     <div
                         className="relative origin-top-left transition-transform duration-200"
                         style={{ transform: `scale(${scale})`, minWidth: '1000px', minHeight: '1000px' }}
@@ -192,15 +225,17 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                                         <div
                                             key={seat.id}
                                             className={cn(
-                                                "absolute flex items-center justify-center text-xs select-none z-0",
-                                                seat.type === 'WALL' && "bg-gray-800 border-2 border-gray-900",
-                                                seat.type === 'WINDOW' && "bg-blue-200 border-2 border-blue-400",
-                                                seat.type === 'DOOR' && "bg-amber-800/20 border-2 border-amber-800 rounded-sm"
+                                                "absolute flex items-center justify-center text-xs select-none font-bold",
+                                                seat.type === 'WALL' ? "bg-gray-800 border-2 border-gray-900 z-0" : "z-10",
+                                                seat.type === 'WINDOW' && "bg-blue-100 border border-blue-300 text-blue-600 rounded-sm",
+                                                seat.type === 'DOOR' && "bg-amber-100 border border-amber-300 text-amber-700 rounded-sm",
+                                                seat.type === 'PILLAR' && "bg-stone-300 border border-stone-400 text-stone-700 rounded-sm"
                                             )}
                                             style={{ left, top, width, height }}
                                         >
-                                            {seat.type === 'WINDOW' && <div className="w-full h-1 bg-blue-400/50" />}
-                                            {seat.type === 'DOOR' && <div className="w-1/2 h-full border-r-2 border-dashed border-amber-800/50" />}
+                                            {seat.type === 'WINDOW' && "창문"}
+                                            {seat.type === 'DOOR' && "문"}
+                                            {seat.type === 'PILLAR' && "기둥"}
                                         </div>
                                     );
                                 }

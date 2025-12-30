@@ -5,7 +5,7 @@ import { DndContext, useSensor, useSensors, PointerSensor, TouchSensor, DragEndE
 import { createSnapModifier } from '@dnd-kit/modifiers';
 import { Button } from '@/components/ui/button';
 import { DraggableSeat } from './DraggableSeat';
-import { Loader2, Save, Plus, ArrowLeft, ZoomIn, ZoomOut, MousePointer2, Box, Square, DoorOpen, Maximize } from 'lucide-react';
+import { Loader2, Save, Plus, ArrowLeft, ZoomIn, ZoomOut, MousePointer2, Box, Square, DoorOpen, Maximize, Columns } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -238,6 +238,7 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                     <Button variant="outline" size="sm" onClick={() => addNode('SEAT')}><Square className="mr-2 h-4 w-4" />좌석</Button>
                     <Button variant="outline" size="sm" onClick={() => addNode('WINDOW')}><Box className="mr-2 h-4 w-4" />창문</Button>
                     <Button variant="outline" size="sm" onClick={() => addNode('DOOR')}><DoorOpen className="mr-2 h-4 w-4" />문</Button>
+                    <Button variant="outline" size="sm" onClick={() => addNode('PILLAR')}><Columns className="mr-2 h-4 w-4" />기둥</Button>
 
                     <Button
                         variant={drawMode === 'WALL' ? "default" : "outline"}
@@ -285,8 +286,16 @@ export function SeatEditor({ roomId }: { roomId: string }) {
                         onDragStart={(e) => {
                             if (drawMode === 'WALL') return; // Disable drag while drawing
                             if (!selectedIds.includes(e.active.id as string)) {
-                                if (!e.active.data.current?.nativeEvent?.shiftKey && !e.active.data.current?.nativeEvent?.ctrlKey) {
+                                const event = e.activatorEvent as MouseEvent;
+                                if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
                                     setSelectedIds([e.active.id as string]);
+                                } else {
+                                    // If modifier held and not selected, add to selection?
+                                    // Actually dragging implicitly selects to move.
+                                    // But if we just want to ADD to selection and move together...
+                                    // The logic below 'setSelectedIds' replaces selection.
+                                    // We want to ADD.
+                                    setSelectedIds(prev => [...prev, e.active.id as string]);
                                 }
                             }
                         }}
