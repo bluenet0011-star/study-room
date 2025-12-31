@@ -171,6 +171,19 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
 
     const updateStatus = async (type: string) => {
         if (!selectedSeat?.student) return;
+
+        // Optimistic Update
+        const previousSeats = [...seats];
+        const updatedSeats = seats.map(s =>
+            s.id === selectedSeat.id
+                ? { ...s, status: type }
+                : s
+        );
+
+        setSeats(updatedSeats);
+        setSelectedSeat(null); // Close dialog immediately
+        toast.success("상태가 업데이트되었습니다. (동기화 중)");
+
         try {
             const res = await fetch(`/api/teacher/rooms/${roomId}/status`, {
                 method: 'POST',
@@ -180,15 +193,17 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
                     type
                 })
             });
+
             if (res.ok) {
-                toast.success("상태가 업데이트되었습니다.");
+                // Success: Fetch latest execution to be sure, silently
                 fetchSeats(true);
-                setSelectedSeat(null);
             } else {
-                toast.error("업데이트 실패");
+                throw new Error("Failed");
             }
         } catch (e) {
-            toast.error("서버 연결 오류");
+            // Revert
+            setSeats(previousSeats);
+            toast.error("업데이트 실패. 원래대로 되돌립니다.");
         }
     };
 

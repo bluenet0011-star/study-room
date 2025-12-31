@@ -48,3 +48,44 @@ export async function DELETE(
         return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
     }
 }
+}
+
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const session = await auth();
+    if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const body = await req.json();
+        const { status } = body;
+
+        // Check ownership
+        const item = await prisma.lostItem.findUnique({
+            where: { id: id },
+            select: { authorId: true }
+        });
+
+        if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+        const isAdmin = session.user.role === 'ADMIN';
+        const isAuthor = item.authorId === session.user.id;
+
+        if (!isAdmin && !isAuthor) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const updated = await prisma.lostItem.update({
+            where: { id: id },
+            data: { status }
+        });
+
+        return NextResponse.json(updated);
+    } catch (e) {
+        return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    }
+}

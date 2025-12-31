@@ -120,6 +120,29 @@ export default function LostFoundPage() {
         }
     };
 
+    const handleUpdateStatus = async (id: string, newStatus: 'LOST' | 'FOUND') => {
+        try {
+            const res = await fetch(`/api/common/lost-found/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                toast.success("상태가 변경되었습니다.");
+                fetchItems(searchTerm);
+                // Update selected item locally to reflect change immediately in dialog
+                if (selectedItem && selectedItem.id === id) {
+                    setItems(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
+                }
+            } else {
+                toast.error("변경 권한이 없거나 실패했습니다.");
+            }
+        } catch (e) {
+            toast.error("오류가 발생했습니다.");
+        }
+    };
+
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selectedItem = items.find(i => i.id === selectedId);
 
@@ -311,9 +334,20 @@ export default function LostFoundPage() {
 
                             <div className="flex justify-end gap-2 pt-4 border-t">
                                 {(session?.user?.id === selectedItem.authorId || session?.user?.role === 'ADMIN') && (
-                                    <Button variant="destructive" onClick={(e) => handleDelete(selectedItem.id, e)}>
-                                        삭제하기
-                                    </Button>
+                                    <>
+                                        {selectedItem.status === 'LOST' ? (
+                                            <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleUpdateStatus(selectedItem.id, 'FOUND')}>
+                                                찾음 완료
+                                            </Button>
+                                        ) : (
+                                            <Button variant="outline" onClick={() => handleUpdateStatus(selectedItem.id, 'LOST')}>
+                                                다시 분실 처리
+                                            </Button>
+                                        )}
+                                        <Button variant="destructive" onClick={(e) => handleDelete(selectedItem.id, e)}>
+                                            삭제하기
+                                        </Button>
+                                    </>
                                 )}
                                 <Button variant="outline" onClick={() => setSelectedId(null)}>닫기</Button>
                             </div>

@@ -1,4 +1,3 @@
-```typescript
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -54,7 +53,7 @@ export default async function DashboardContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Dynamic Stats (Streamed) */}
                 <StatsSection />
-                
+
                 {/* Notices (Streamed) */}
                 <Suspense fallback={<NoticesSkeleton />}>
                     <NoticesWidget />
@@ -85,4 +84,3 @@ export default async function DashboardContent() {
         </div>
     );
 }
-```
