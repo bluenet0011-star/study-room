@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Timetable } from 'comcigan-parser';
+import Timetable from 'comcigan-parser';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
