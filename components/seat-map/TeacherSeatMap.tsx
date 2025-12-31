@@ -129,8 +129,13 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
         setIsDragging(false);
     };
 
-    const fetchSeats = useCallback(async (isBackground = false) => {
-        if (!isBackground) setIsLoading(true);
+    const lastInteraction = useRef(0);
+
+    const fetchSeats = useCallback(async (source: 'init' | 'poll' | 'update' = 'init') => {
+        // Skip polling if recently interacted (prevent overwrite of optimistic UI)
+        if (source === 'poll' && Date.now() - lastInteraction.current < 3000) return;
+
+        if (source === 'init') setIsLoading(true);
         try {
             const res = await fetch(`/api/teacher/rooms/${roomId}/status`, { cache: 'no-store' });
             if (res.ok) {
@@ -140,13 +145,13 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
         } catch (error) {
             console.error("Failed to fetch seats", error);
         } finally {
-            if (!isBackground) setIsLoading(false);
+            if (source === 'init') setIsLoading(false);
         }
     }, [roomId]);
 
     useEffect(() => {
-        fetchSeats();
-        const interval = setInterval(() => fetchSeats(true), 5000); // Poll every 5s
+        fetchSeats('init');
+        const interval = setInterval(() => fetchSeats('poll'), 5000); // Poll every 5s
         return () => clearInterval(interval);
     }, [fetchSeats]);
 
@@ -172,6 +177,9 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
     const updateStatus = async (type: string) => {
         if (!selectedSeat?.student) return;
 
+        // Mark interaction to pause polling
+        lastInteraction.current = Date.now();
+
         // Optimistic Update
         const previousSeats = [...seats];
         const updatedSeats = seats.map(s =>
@@ -195,8 +203,8 @@ export default function TeacherSeatMap({ roomId }: TeacherSeatMapProps) {
             });
 
             if (res.ok) {
-                // Success: Fetch latest execution to be sure, silently
-                fetchSeats(true);
+                // Success: Fetch latest execution to be sure
+                fetchSeats('update');
             } else {
                 throw new Error("Failed");
             }
