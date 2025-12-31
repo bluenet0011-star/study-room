@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     if (session?.user?.role !== "TEACHER") return new NextResponse("Unauthorized", { status: 401 });
 
     try {
-        const { studentId, type, start, end, reason } = await req.json();
+        const { studentId, type, start, end, reason, location } = await req.json();
 
         const permission = await prisma.permission.create({
             data: {
@@ -17,7 +17,8 @@ export async function POST(req: Request) {
                 status: 'APPROVED', // Normally teacher-initiated are auto-approved
                 start: new Date(start),
                 end: new Date(end),
-                reason: `[교사 대리 신청] ${reason}`
+                reason: `[교사 대리 신청] ${reason}`,
+                location: location || undefined
             },
             include: {
                 student: true
