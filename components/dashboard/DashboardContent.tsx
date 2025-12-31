@@ -34,6 +34,9 @@ export default async function DashboardContent() {
         return null;
     };
 
+    const today = new Date();
+    const dateString = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+
     return (
         <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto pb-24">
             {/* Header Section */}
@@ -42,7 +45,9 @@ export default async function DashboardContent() {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
                         안녕하세요, {session.user.name}님!
                     </h1>
-                    <p className="text-gray-500 mt-1 font-medium">오늘도 즐거운 하루 되세요.</p>
+                    <p className="text-gray-500 mt-1 font-medium">
+                        {dateString} ・ 오늘도 즐거운 하루 되세요.
+                    </p>
                 </div>
                 <div className="px-4 py-1.5 bg-red-50 text-red-600 rounded-full text-sm font-semibold border border-red-100 shadow-sm animate-pulse">
                     {role === 'STUDENT' ? '학생' : (role === 'TEACHER' ? '선생님' : '관리자')}
