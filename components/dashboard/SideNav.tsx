@@ -45,8 +45,12 @@ export function SideNav({ role }: { role: string }) {
             </div>
             <div className="p-4">
                 <Button variant="outline" className="w-full gap-2" onClick={async () => {
-                    await unsubscribePush();
-                    await signOut();
+                    // Prevent hang if service worker is unresponsive
+                    const unsubscribe = unsubscribePush().catch(err => console.error("Push unsubscribe failed", err));
+                    const timeout = new Promise(resolve => setTimeout(resolve, 500));
+                    await Promise.race([unsubscribe, timeout]);
+
+                    await signOut({ callbackUrl: "/login" });
                 }}>
                     <LogOut className="w-4 h-4" />
                     로그아웃

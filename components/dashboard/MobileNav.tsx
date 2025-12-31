@@ -85,8 +85,12 @@ export function MobileNav({ role }: { role: string }) {
                                 앱 설치 방법
                             </Button>
                             <Button variant="outline" className="w-full gap-2" onClick={async () => {
-                                await unsubscribePush();
-                                await signOut();
+                                // Prevent hang if service worker is unresponsive
+                                const unsubscribe = unsubscribePush().catch(err => console.error("Push unsubscribe failed", err));
+                                const timeout = new Promise(resolve => setTimeout(resolve, 500));
+                                await Promise.race([unsubscribe, timeout]);
+
+                                await signOut({ callbackUrl: "/login" });
                             }}>
                                 <LogOut className="w-4 h-4" />
                                 로그아웃

@@ -45,7 +45,7 @@ export function PushManager() {
     if (permission === 'granted') return null;
 
     return (
-        <div className="fixed bottom-4 left-4 z-50">
+        <div className="fixed bottom-4 right-4 z-50">
             {/* Small floating button if permission is default, or maybe just rely on user action elsewhere? 
            The user asked for "functionality", implicit is better but browser blocks it.
            We'll show a small alert/toast or button.
