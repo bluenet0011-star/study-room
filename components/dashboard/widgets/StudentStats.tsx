@@ -4,10 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 async function getStudentStats(studentId: string) {
     // Current Seat
-    const assignment = await prisma.seatAssignment.findFirst({
-        where: { userId: studentId, active: true, endDate: null },
-        include: { seat: { include: { room: true } } }
-    });
+
 
     // Active Permission (Today Only)
     const now = new Date();
@@ -35,7 +32,7 @@ async function getStudentStats(studentId: string) {
     const nextPermission = todayPermissions.find(p => new Date(p.end) > now && p.status === 'APPROVED');
 
     return {
-        seat: assignment ? `${assignment.seat.room.name} ${assignment.seat.label}` : '미배정',
+
         todayPermissions, // Not used but fetched
         counts: {
             pending: pendingCount,
@@ -50,18 +47,7 @@ export async function StudentStats({ studentId }: { studentId: string }) {
 
     return (
         <>
-            <Card className="bg-gradient-to-br from-red-50 to-white border-red-100 shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-red-900">내 자습석</CardTitle>
-                    <div className="h-4 w-4 text-red-500 rounded-full border-2 border-current flex items-center justify-center text-[10px] font-bold">
-                        S
-                    </div>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
-                    <div className="text-lg md:text-2xl font-bold text-red-700 truncate">{data.seat}</div>
-                    <p className="text-xs text-red-600/80 mt-1">현재 이용 중인 좌석</p>
-                </CardContent>
-            </Card>
+
 
             <Card className="bg-gradient-to-br from-red-50 to-white border-red-100 shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -106,7 +92,7 @@ export async function StudentStats({ studentId }: { studentId: string }) {
 export function StatsSkeleton() {
     return (
         <>
-            {[1, 2, 3].map(i => (
+            {[1, 2].map(i => (
                 <Card key={i} className="animate-pulse bg-gray-50 border-gray-100">
                     <CardHeader className="pb-2">
                         <div className="h-4 w-20 bg-gray-200 rounded"></div>
