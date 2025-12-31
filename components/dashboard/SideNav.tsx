@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Users, DoorOpen, CalendarCheck, LogOut, UserPlus, FileText, QrCode } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { unsubscribePush } from "@/lib/push-notifications";
 
 import { NAV_LINKS } from "@/config/nav";
 
@@ -43,7 +44,10 @@ export function SideNav({ role }: { role: string }) {
                 ))}
             </div>
             <div className="p-4">
-                <Button variant="outline" className="w-full gap-2" onClick={() => signOut()}>
+                <Button variant="outline" className="w-full gap-2" onClick={async () => {
+                    await unsubscribePush();
+                    await signOut();
+                }}>
                     <LogOut className="w-4 h-4" />
                     로그아웃
                 </Button>

@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { sendPushNotification } from "@/lib/push-server";
 
 
 const permissionSchema = z.object({
@@ -70,6 +71,14 @@ export async function POST(req: Request) {
                 message: `${session.user.name} 학생이 ${data.type === 'MOVEMENT' ? '이동' : data.type === 'OUTING' ? '외출' : '기타'} 퍼미션을 신청했습니다.`,
                 read: false
             }
+        });
+
+        // Send Push Notification
+        await sendPushNotification({
+            userId: data.teacherId,
+            title: "새로운 퍼미션 신청",
+            message: `${session.user.name} 학생이 ${data.type === 'MOVEMENT' ? '이동' : data.type === 'OUTING' ? '외출' : '기타'} 퍼미션을 신청했습니다.`,
+            url: `/teacher/permissions?studentId=${session.user.id}` // Redirect to list filtering this student (optional) or just permission list
         });
 
         return NextResponse.json(permission);

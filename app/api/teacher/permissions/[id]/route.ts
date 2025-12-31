@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { sendPushNotification } from "@/lib/push-server";
 
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -42,6 +43,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 title,
                 message
             }
+        });
+
+        // Send Push Notification
+        await sendPushNotification({
+            userId: permission.studentId,
+            title,
+            message,
+            url: "/student/permissions" // Student view
         });
     }
 

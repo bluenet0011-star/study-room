@@ -325,6 +325,15 @@ Vercel은 웹사이트를 인터넷에 올려주는 서비스입니다.
      - 배포 후 실제 주소로 업데이트 예정
    - `Add` 버튼 클릭
 
+   #### ④ 푸시 알림 설정 (중요!)
+   
+   푸시 알림 기능을 위해 다음 3개의 변수도 추가해야 합니다. 값은 로컬 `.env` 파일에 있는 내용을 그대로 복사하세요.
+
+   - **NEXT_PUBLIC_VAPID_PUBLIC_KEY**
+   - **VAPID_PRIVATE_KEY**
+   - **VAPID_SUBJECT** (값: `mailto:admin@example.com`)
+   - `Add` 버튼 클릭
+
 3. **환경 변수 확인**
    - 3개의 환경 변수가 모두 추가되었는지 확인
    - Environment: `Production`, `Preview`, `Development` 모두 체크되어 있는지 확인

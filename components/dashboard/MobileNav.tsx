@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { LayoutDashboard, Users, DoorOpen, CalendarCheck, LogOut, FileText, QrCode, Menu, ArrowLeft, HelpCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { signOut, useSession } from "next-auth/react";
+import { unsubscribePush } from "@/lib/push-notifications";
 import { useState } from "react";
 
 import { NAV_LINKS } from "@/config/nav";
@@ -83,7 +84,10 @@ export function MobileNav({ role }: { role: string }) {
                                 <HelpCircle className="w-4 h-4" />
                                 앱 설치 방법
                             </Button>
-                            <Button variant="outline" className="w-full gap-2" onClick={() => signOut()}>
+                            <Button variant="outline" className="w-full gap-2" onClick={async () => {
+                                await unsubscribePush();
+                                await signOut();
+                            }}>
                                 <LogOut className="w-4 h-4" />
                                 로그아웃
                             </Button>

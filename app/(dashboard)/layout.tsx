@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SideNav } from "@/components/dashboard/SideNav";
 import { MobileNav } from "@/components/dashboard/MobileNav";
 import { NotificationBell } from "@/components/NotificationBell";
+import { PushManager } from "@/components/PushManager";
 
 export default async function DashboardLayout({
     children,
@@ -28,6 +29,8 @@ export default async function DashboardLayout({
                     <NotificationBell />
                 </div>
 
+
+                <PushManager />
                 {children}
             </div>
         </div>
