@@ -1,20 +1,59 @@
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 export default function Loading() {
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-            <div className="relative flex flex-col items-center gap-4">
-                <div className="relative">
-                    <div className="w-16 h-16 rounded-full border-4 border-red-100"></div>
-                    <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-red-600 border-t-transparent animate-spin"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-                    </div>
+        <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500">
+            {/* Header Skeleton */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="space-y-2">
+                    <Skeleton className="h-10 w-48 md:w-64" />
+                    <Skeleton className="h-4 w-64 md:w-96" />
                 </div>
-                <div className="flex flex-col items-center gap-1">
-                    <p className="text-sm font-semibold text-red-600 animate-pulse tracking-wide">LOADING</p>
-                    <p className="text-[10px] text-gray-400">잠시만 기다려주세요...</p>
-                </div>
+                <Skeleton className="h-8 w-32" />
+            </div>
+
+            {/* Widgets Skeleton */}
+            <div className="grid grid-cols-2 gap-3 md:gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                    <Card key={i} className="shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-4 rounded-full" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-16 mb-2" />
+                            <Skeleton className="h-3 w-32" />
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Content Area Skeleton */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-4 lg:col-span-5 h-[400px]">
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-48" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {[...Array(5)].map((_, i) => (
+                                <Skeleton key={i} className="h-12 w-full" />
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="col-span-3 lg:col-span-2 h-[400px]">
+                    <CardHeader>
+                        <Skeleton className="h-6 w-24" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {[...Array(3)].map((_, i) => (
+                            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
