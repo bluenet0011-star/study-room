@@ -14,17 +14,17 @@ export async function GET(req: Request) {
         const timetable = new Timetable();
         await timetable.init();
 
-        // Search and set school. 
-        // We know the code is 79731 (Dongtan Global High School) from research.
-        // However, the library usually requires a search step or setting the school directly if instantiated correctly.
-        // Let's try searching first for robustness, or assume the code is stable.
-        // Usually: await timetable.search('동탄국제고등학교'); 
-        // Then: const school = timetable.find(s => s.code === 79731);
-        // timetable.setSchool(79731);
+        // Search is required to establish session/cookie for some versions
+        const schoolList = await timetable.search('동탄국제고등학교');
 
-        // Optimizing: Just set school if possible. 
-        // The library might require `init` then `setSchool`.
-        await timetable.setSchool(79731);
+        // Find the school by code or name
+        const school = schoolList.find((s: any) => s.code === 79731);
+
+        if (!school) {
+            return NextResponse.json({ error: 'School not found during search' }, { status: 404 });
+        }
+
+        await timetable.setSchool(school.code);
 
         const result = await timetable.getTimetable();
 
