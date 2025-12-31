@@ -176,6 +176,9 @@ export function PermissionForm({
                         </Button>
                     ))}
                 </div>
+                <p className="text-xs text-gray-500 mt-2 pl-1 break-keep">
+                    💡 세밀한 시간 조정이나 날짜가 변경되는 경우, 아래에서 직접 입력해주세요.
+                </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div className="space-y-2">
