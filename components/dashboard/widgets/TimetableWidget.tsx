@@ -35,19 +35,13 @@ export function TimetableWidget({ grade, classNum }: TimetableWidgetProps) {
                 if (!res.ok) throw new Error("Failed");
                 const data = await res.json();
 
-                // Get today's day index (1=Mon, ..., 5=Fri)
-                const today = new Date().getDay();
+                // Get today's day index (0=Mon, ..., 4=Fri in comcigan array)
+                // Date.getDay(): 0=Sun, 1=Mon, ..., 6=Sat
+                const today = new Date().getDay() - 1;
 
-                // comcigan-parser structure: [grade][class][weekday][period]
-                // data returned from API is `result[grade][class]` which is `Array<Array<Subject>>`?
-                // API returns `result[grade][class]` which is an object where keys are weekdays?
-                // Actually comcigan-parser returns: 
-                // [ [null], [null, MonData...], [null, TueData...] ] (index is weekday)
-
-                // Let's assume API returns the array for the class, where index is weekday.
-                // data[today] should be the periods for today.
-
-                if (data && data[today]) {
+                if (today < 0 || today > 4) {
+                    setTimetable([]);
+                } else if (data && data[today]) {
                     setTimetable(data[today]);
                 } else {
                     setTimetable([]);
@@ -93,13 +87,12 @@ export function TimetableWidget({ grade, classNum }: TimetableWidgetProps) {
                 ) : (
                     <div className="space-y-2">
                         {timetable.map((period, idx) => {
-                            // comcigan-parser might return periods starting from 1
                             if (!period || !period.subject) return null;
                             const isCurrentPeriod = false; // logic to highlight current period could be added
 
                             return (
                                 <div key={idx} className="flex items-center text-sm p-2 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                    <div className="w-8 font-bold text-slate-400 text-xs">{idx}교시</div>
+                                    <div className="w-12 font-bold text-slate-400 text-xs">{idx + 1}교시</div>
                                     <div className="flex-1 font-semibold text-slate-700">
                                         {period.subject}
                                     </div>
