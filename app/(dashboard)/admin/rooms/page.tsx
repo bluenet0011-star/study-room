@@ -56,7 +56,18 @@ export default function RoomsPage() {
                     </div>
                     <div className="space-y-2 w-24">
                         <Label>학년</Label>
-                        <Input value={newRoomGrade} onChange={e => setNewRoomGrade(e.target.value)} placeholder="1" type="number" />
+                        <Input
+                            value={newRoomGrade}
+                            onChange={e => {
+                                const val = e.target.value;
+                                if (val === '' || (/^\d+$/.test(val) && parseInt(val) > 0)) {
+                                    setNewRoomGrade(val);
+                                }
+                            }}
+                            placeholder="1"
+                            type="text"
+                            inputMode="numeric"
+                        />
                     </div>
                     <Button onClick={handleCreate} disabled={loading}>생성</Button>
                 </CardContent>
