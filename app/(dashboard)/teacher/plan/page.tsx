@@ -134,7 +134,9 @@ export default function TeacherPlanPage() {
 
             if (pendingRes.ok) {
                 const data = await pendingRes.json();
-                setPendingPermissions(data.filter((p: any) => p.status === 'PENDING'));
+                // API returns { permissions: [], meta: {} }
+                const list = data.permissions || [];
+                setPendingPermissions(list.filter((p: any) => p.status === 'PENDING'));
             }
 
             if (historyRes.ok) {
