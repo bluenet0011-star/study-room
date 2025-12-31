@@ -41,8 +41,11 @@ export async function GET(req: Request) {
         }
 
         return NextResponse.json(classTimetable);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Timetable Fetch Error:", error);
-        return NextResponse.json({ error: 'Failed to fetch timetable' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Failed to fetch timetable',
+            details: error.message || String(error)
+        }, { status: 500 });
     }
 }
