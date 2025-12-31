@@ -120,8 +120,8 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
                             <tr key={period} className="hover:bg-gray-50">
                                 <td className="py-4 px-4 font-bold text-center text-gray-500 bg-gray-50/50">{period}</td>
                                 {WEEKDAYS.map((_, idx) => {
-                                    const dayIdx = idx + 1; // 1-based index for Mon-Fri
-                                    const data = getSubject(dayIdx, period);
+                                    const dayIdx = idx; // 0-based index for Mon(0)-Fri(4)
+                                    const data = getSubject(dayIdx, period - 1);
                                     return (
                                         <td key={`${dayIdx}-${period}`} className="py-4 px-2 text-center relative group">
                                             {/* Render Logic */}
@@ -148,10 +148,10 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
             {/* Mobile View (Cards per Day) */}
             <div className="md:hidden space-y-6">
                 {WEEKDAYS.map((day, idx) => {
-                    const dayIdx = idx + 1;
+                    const dayIdx = idx;
                     // Skip if today is Saturday/Sunday? No, show all.
                     // Or highlight today.
-                    const isToday = new Date().getDay() === dayIdx;
+                    const isToday = (new Date().getDay() || 7) - 1 === dayIdx;
 
                     return (
                         <Card key={day} className={`overflow-hidden ${isToday ? 'border-primary ring-1 ring-primary' : ''}`}>
@@ -164,7 +164,7 @@ export function TimetableGrid({ grade, classNum }: TimetableGridProps) {
                             <CardContent className="p-0">
                                 <div className="divide-y">
                                     {PERIODS.map(period => {
-                                        const data = getSubject(dayIdx, period);
+                                        const data = getSubject(dayIdx, period - 1);
                                         if (!data && !isToday) return null; // Hide empty rows for non-today to save space? Optional.
 
                                         return (

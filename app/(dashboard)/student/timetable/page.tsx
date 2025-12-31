@@ -39,7 +39,7 @@ export default async function TimetablePage() {
     return (
         <div className="p-4 md:p-6 w-full max-w-5xl mx-auto space-y-6">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">학급 시간표</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">주간 시간표</h1>
                 <p className="text-muted-foreground mt-1">
                     {user.grade}학년 {user.class}반 시간표입니다.
                 </p>
