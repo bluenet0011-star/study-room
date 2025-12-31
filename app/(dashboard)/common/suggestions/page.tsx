@@ -141,22 +141,55 @@ export default function SuggestionsPage() {
                     </Button>
 
                     <div className="relative flex-1 md:w-64">
-                        {/* ... search ... */}
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="검색어 입력..."
+                            className="pl-9 bg-white"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
 
-                    {/* ... create dialog ... */}
-                    <div className="space-y-4 py-4">
-                        {/* ... */}
-                        <div className="space-y-2">
-                            <Label>내용</Label>
-                            <Textarea
-                                placeholder="학교 발전을 위한 소중한 의견을 적어주세요. 상호 존중하는 언어를 사용해주시기 바랍니다."
-                                className="min-h-[150px]"
-                                value={content}
-                                onChange={e => setContent(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Plus className="w-4 h-4 mr-2" />
+                                건의하기
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>건의사항 작성</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label>제목</Label>
+                                    <Input
+                                        placeholder="제목을 입력하세요"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>내용</Label>
+                                    <Textarea
+                                        placeholder="학교 발전을 위한 소중한 의견을 적어주세요. 상호 존중하는 언어를 사용해주시기 바랍니다."
+                                        className="min-h-[150px]"
+                                        value={content}
+                                        onChange={e => setContent(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
+                                <Button onClick={handleCreate} disabled={loading}>
+                                    {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                    등록하기
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
