@@ -68,11 +68,11 @@ export function MobileNav({ role }: { role: string }) {
                                         <Button
                                             variant="ghost"
                                             className={cn(
-                                                "w-full justify-start gap-2",
-                                                (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "bg-red-50 text-primary font-bold"
+                                                "w-full justify-start gap-3 h-12 text-base", // h-12 for larger touch target, text-base for readability
+                                                (pathname === link.href || (pathname.startsWith(link.href) && link.href !== '/')) && "bg-green-50 text-green-700 font-bold"
                                             )}
                                         >
-                                            <link.icon className="w-4 h-4" />
+                                            <link.icon className="w-5 h-5" />
                                             {link.name}
                                         </Button>
                                     </Link>
