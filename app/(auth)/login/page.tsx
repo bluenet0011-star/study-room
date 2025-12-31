@@ -61,8 +61,9 @@ function LoginForm() {
                 <div className="absolute top-4 right-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100/50">
+                            <Button variant="outline" size="sm" className="gap-2 text-gray-500 hover:text-gray-900 border-gray-200 hover:border-gray-300 hover:bg-gray-50">
                                 <Bug className="w-4 h-4" />
+                                <span>테스트 계정</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">

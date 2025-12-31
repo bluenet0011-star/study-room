@@ -49,6 +49,20 @@ export async function POST(req: Request) {
         const end = new Date(data.end);
         if (end <= start) return new NextResponse("End time must be after start time", { status: 400 });
 
+        // Overlap Check (Requirements: Prevent overlapping permissions)
+        const conflict = await prisma.permission.findFirst({
+            where: {
+                studentId: session.user.id,
+                status: { in: ["PENDING", "APPROVED"] },
+                start: { lt: end },
+                end: { gt: start }
+            }
+        });
+
+        if (conflict) {
+            return new NextResponse("이미 해당 시간에 신청된 퍼미션이 존재합니다.", { status: 409 });
+        }
+
         const permission = await prisma.permission.create({
             data: {
                 studentId: session.user.id,
