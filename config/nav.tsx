@@ -2,20 +2,7 @@ import { LayoutDashboard, Users, DoorOpen, CalendarCheck, FileText, QrCode, Cloc
 
 export const NAV_LINKS = [
     // Common
-    {
-        name: "대시보드",
-        href: `/`,
-        icon: LayoutDashboard,
-        roles: ["ADMIN", "TEACHER", "STUDENT"],
-        description: "메인 대시보드로 이동합니다."
-    },
-    {
-        name: "조회",
-        href: `/`,
-        icon: LayoutDashboard,
-        roles: [], // Hidden
-        description: "" // Placeholder to maintain structure if needed, or better to remove entirely.
-    },
+
     // Removed Notice Link from Menu as per feedback
 
 
