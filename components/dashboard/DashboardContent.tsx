@@ -7,12 +7,26 @@ import { Suspense } from "react";
 import { StudentStats, StatsSkeleton } from "@/components/dashboard/widgets/StudentStats";
 import { TeacherStats } from "@/components/dashboard/widgets/TeacherStats"; // Reuse StatsSkeleton?
 import { NoticesWidget, NoticesSkeleton } from "@/components/dashboard/widgets/NoticesWidget";
+import { TimetableWidget } from "@/components/dashboard/widgets/TimetableWidget";
+import { prisma } from "@/lib/prisma";
 
 export default async function DashboardContent() {
     const session = await auth();
     if (!session?.user) redirect("/login");
 
     const { role } = session.user;
+
+    let userGrade = 0;
+    let userClass = 0;
+    if (role === 'STUDENT') {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { grade: true, class: true }
+        });
+        userGrade = user?.grade || 0;
+        userClass = user?.class || 0;
+    }
+
     const filteredLinks = NAV_LINKS.filter(link => link.roles.includes(role));
 
     // Stats Widget Selector
@@ -57,7 +71,13 @@ export default async function DashboardContent() {
             {/* Widgets Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Dynamic Stats (Streamed) */}
+                {/* Dynamic Stats (Streamed) */}
                 <StatsSection />
+
+                {/* Timetable Widget (Student Only) */}
+                {role === 'STUDENT' && (
+                    <TimetableWidget grade={userGrade} classNum={userClass} />
+                )}
 
                 {/* Notices (Streamed) */}
                 <Suspense fallback={<NoticesSkeleton />}>
