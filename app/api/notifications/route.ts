@@ -35,3 +35,17 @@ export async function PATCH(req: Request) {
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    const session = await auth();
+    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+
+    try {
+        await prisma.notification.deleteMany({
+            where: { userId: session.user.id }
+        });
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}

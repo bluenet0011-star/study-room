@@ -9,15 +9,26 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
+    const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
+
+    const whereClause: any = {
+        teacherId: session.user.id
+    };
+
+    if (search) {
+        whereClause.student = {
+            name: { contains: search, mode: 'insensitive' }
+        };
+    }
 
     // Fetch total count for pagination metadata
     const total = await prisma.permission.count({
-        where: { teacherId: session.user.id } // Filter consistent with findMany
+        where: whereClause
     });
 
     const permissions = await prisma.permission.findMany({
-        where: { teacherId: session.user.id },
+        where: whereClause,
         include: { student: { select: { name: true, grade: true, class: true, number: true } } },
         orderBy: { createdAt: 'desc' },
         skip,

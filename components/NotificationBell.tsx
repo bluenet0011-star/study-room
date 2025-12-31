@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Check, Loader2 } from 'lucide-react';
+import { Bell, Check, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -56,6 +56,22 @@ export function NotificationBell() {
         }
     };
 
+    const deleteAll = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/notifications', { method: 'DELETE' });
+            if (res.ok) {
+                setNotifications([]);
+                setUnreadCount(0);
+                toast.success("알림이 모두 삭제되었습니다.");
+            }
+        } catch (e) {
+            toast.error("삭제 중 오류가 발생했습니다.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -71,18 +87,32 @@ export function NotificationBell() {
             <PopoverContent className="w-80 p-0" align="end">
                 <div className="flex items-center justify-between p-3 border-b bg-gray-50/80 backdrop-blur-sm">
                     <span className="font-semibold text-sm">알림 ({unreadCount})</span>
-                    {unreadCount > 0 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 text-xs text-blue-600 hover:text-blue-700 px-2"
-                            onClick={markAllRead}
-                            disabled={loading}
-                        >
-                            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3 mr-1" />}
-                            모두 읽음
-                        </Button>
-                    )}
+                    <div className="flex gap-1">
+                        {unreadCount > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={markAllRead}
+                                disabled={loading}
+                                title="모두 읽음"
+                            >
+                                <Check className="w-3.5 h-3.5" />
+                            </Button>
+                        )}
+                        {notifications.length > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                onClick={deleteAll}
+                                disabled={loading}
+                                title="모두 삭제"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <ScrollArea className="h-[320px]">
                     {notifications.length === 0 ? (

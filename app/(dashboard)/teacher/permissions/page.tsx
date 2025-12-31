@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Check, X, Loader2, RefreshCw } from 'lucide-react';
+import { Check, X, Loader2, RefreshCw, Search } from 'lucide-react';
+import { Input } from "@/components/ui/input";
 
 interface Permission {
     id: string;
@@ -39,16 +40,31 @@ export default function PermissionInboxPage() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedTerm, setDebouncedTerm] = useState("");
+
+    // Debounce Logic
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedTerm(searchTerm);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     useEffect(() => {
         loadPermissions(1, true);
-    }, []);
+    }, [debouncedTerm]);
 
     const loadPermissions = async (pageNum: number, reset = false) => {
-        if (isFetching) return;
+        if (isFetching && !reset) return;
         setIsFetching(true);
         try {
-            const res = await fetch(`/api/teacher/permissions?page=${pageNum}&limit=20`);
+            const params = new URLSearchParams();
+            params.set('page', pageNum.toString());
+            params.set('limit', '20');
+            if (debouncedTerm) params.set('search', debouncedTerm);
+
+            const res = await fetch(`/api/teacher/permissions?${params.toString()}`);
             const data = await res.json();
 
             if (reset) {
@@ -119,37 +135,51 @@ export default function PermissionInboxPage() {
     return (
         <div className="p-4 md:p-6 pb-20">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h1 className="text-2xl font-bold">퍼미션 관리</h1>
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                    <Button
-                        variant={sortMethod === 'DEFAULT' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSortMethod('DEFAULT')}
-                        className="whitespace-nowrap"
-                    >
-                        기본순
-                    </Button>
-                    <Button
-                        variant={sortMethod === 'PROCESSED' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSortMethod('PROCESSED')}
-                        className="whitespace-nowrap"
-                    >
-                        처리일순
-                    </Button>
-                    <Button
-                        variant={sortMethod === 'TIME' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSortMethod('TIME')}
-                        className="whitespace-nowrap"
-                    >
-                        시간순
-                    </Button>
-                    <div className="w-px h-6 bg-gray-300 mx-2 hidden md:block"></div>
-                    <Button variant="ghost" size="sm" onClick={() => loadPermissions(1, true)} className="whitespace-nowrap">
-                        <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                        새로고침
-                    </Button>
+                <h1 className="text-2xl font-bold whitespace-nowrap">퍼미션 관리</h1>
+
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                        <Input
+                            type="search"
+                            placeholder="학생 이름 검색..."
+                            className="pl-9 w-full bg-white"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                        <Button
+                            variant={sortMethod === 'DEFAULT' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSortMethod('DEFAULT')}
+                            className="whitespace-nowrap"
+                        >
+                            기본순
+                        </Button>
+                        <Button
+                            variant={sortMethod === 'PROCESSED' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSortMethod('PROCESSED')}
+                            className="whitespace-nowrap"
+                        >
+                            처리일순
+                        </Button>
+                        <Button
+                            variant={sortMethod === 'TIME' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSortMethod('TIME')}
+                            className="whitespace-nowrap"
+                        >
+                            시간순
+                        </Button>
+                        <div className="w-px h-6 bg-gray-300 mx-2 hidden md:block"></div>
+                        <Button variant="ghost" size="sm" onClick={() => loadPermissions(1, true)} className="whitespace-nowrap">
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                            새로고침
+                        </Button>
+                    </div>
                 </div>
             </div>
 
