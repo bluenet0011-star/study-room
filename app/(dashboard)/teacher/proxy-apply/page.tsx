@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Search, UserPlus, Calendar } from 'lucide-react';
+import { Loader2, Search, UserPlus, Calendar, AlertTriangle } from 'lucide-react';
 
 import { useSession } from 'next-auth/react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -237,10 +237,30 @@ export default function ProxyApplyPage() {
                                 <Textarea value={formData.reason} onChange={e => setFormData({ ...formData, reason: e.target.value })} placeholder="대리 신청 사유를 입력하세요..." required />
                             </div>
 
-                            <Button type="submit" className="w-full h-12 text-lg bg-green-600 hover:bg-green-700" disabled={loading || !selectedStudent}>
-                                {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                                대리 신청 및 승인
-                            </Button>
+                            {(() => {
+                                const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+                                const now = new Date();
+                                // buffer 1 min
+                                const isPastTime = startDateTime < new Date(now.getTime() - 60000);
+
+                                return (
+                                    <>
+                                        {isPastTime && (
+                                            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start gap-2 text-amber-800">
+                                                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                                                <div className="text-sm">
+                                                    <span className="font-bold block">신청 불가: 과거 시간</span>
+                                                    이미 지난 시간으로는 퍼미션을 신청할 수 없습니다. 시간을 확인해주세요.
+                                                </div>
+                                            </div>
+                                        )}
+                                        <Button type="submit" className="w-full h-12 text-lg bg-green-600 hover:bg-green-700" disabled={loading || !selectedStudent || isPastTime}>
+                                            {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                                            대리 신청 및 승인
+                                        </Button>
+                                    </>
+                                );
+                            })()}
                         </form>
                     </div>
                 </CardContent>

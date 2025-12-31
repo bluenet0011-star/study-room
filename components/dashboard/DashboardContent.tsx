@@ -52,9 +52,9 @@ async function getStudentStats(studentId: string) {
     const pendingCount = todayPermissions.filter(p => p.status === 'PENDING').length;
     const approvedCount = todayPermissions.filter(p => p.status === 'APPROVED').length;
 
-    // Find Next/Active Permission (End > Now). 
+    // Find Next/Active Permission (End > Now) AND APPROVED. 
     // Since we ordered by 'start: asc', this will pick the current one (if active) or the immediate next one.
-    const nextPermission = todayPermissions.find(p => new Date(p.end) > now);
+    const nextPermission = todayPermissions.find(p => new Date(p.end) > now && p.status === 'APPROVED');
 
     return {
         seat: assignment ? `${assignment.seat.room.name} ${assignment.seat.label}` : '미배정',

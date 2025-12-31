@@ -10,6 +10,24 @@ const proxyApplySchema = z.object({
     end: z.string().datetime(),
     reason: z.string().min(1),
     location: z.string().optional()
+}).refine((data) => {
+    const start = new Date(data.start);
+    const end = new Date(data.end);
+    return end > start;
+}, {
+    message: "종료 시간이 시작 시간보다 빨라야 합니다.",
+    path: ["end"]
+}).refine((data) => {
+    // Check for past time
+    // Allow a small buffer (e.g. 5 mins) for network/clock drift?
+    // User said "Past time".
+    const start = new Date(data.start);
+    const now = new Date();
+    // buffer 1 min
+    return start > new Date(now.getTime() - 60000);
+}, {
+    message: "과거의 시간으로 신청할 수 없습니다.",
+    path: ["start"]
 });
 
 export async function POST(req: Request) {
