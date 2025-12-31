@@ -37,7 +37,7 @@ const PERIODS = [
     { label: "9교시", start: "17:40", end: "18:30" },
     { label: "저녁", start: "18:30", end: "19:30" },
     { label: "야 1", start: "19:30", end: "20:30" },
-    { label: "야 2", start: "20:40", end: "21:50" }
+    { label: "야 2", start: "20:30", end: "21:20" }
 ];
 
 export function PermissionForm({

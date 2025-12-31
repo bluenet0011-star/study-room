@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Check, X, Loader2, RefreshCw, Search } from 'lucide-react';
+import { Check, X, Loader2, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 
 interface Permission {
@@ -106,6 +106,26 @@ export default function PermissionInboxPage() {
             }
         } catch (e) {
             console.error("Action failed", e);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("정말 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.")) return;
+
+        // Optimistic Remove
+        setPermissions(prev => prev.filter(p => p.id !== id));
+
+        try {
+            const res = await fetch(`/api/teacher/permissions/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) {
+                console.error("Delete failed server-side");
+                // Ideally refresh or show error
+            }
+        } catch (e) {
+            console.error("Delete failed", e);
         }
     };
 
@@ -231,14 +251,26 @@ export default function PermissionInboxPage() {
                                         </Button>
                                     </>
                                 ) : (
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleAction(p.id, 'PENDING')}
-                                        className="text-xs text-gray-400 hover:text-gray-900"
-                                    >
-                                        상태 되돌리기
-                                    </Button>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleAction(p.id, 'PENDING')}
+                                            className="text-xs text-gray-400 hover:text-gray-900"
+                                        >
+                                            상태 되돌리기
+                                        </Button>
+                                        <div className="h-3 w-px bg-gray-300 mx-1"></div>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleDelete(p.id)}
+                                            className="text-xs text-red-400 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                            삭제
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>

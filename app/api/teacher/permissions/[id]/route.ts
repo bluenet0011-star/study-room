@@ -58,3 +58,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json(permission);
 }
+
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const session = await auth();
+    const { id } = await params;
+    if (session?.user?.role !== "TEACHER") return new NextResponse("Unauthorized", { status: 401 });
+
+    try {
+        await prisma.permission.delete({
+            where: { id: id }
+        });
+        return new NextResponse(null, { status: 204 });
+    } catch (e) {
+        return new NextResponse("Error deleting permission", { status: 500 });
+    }
+}
