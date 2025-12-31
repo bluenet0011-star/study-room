@@ -12,13 +12,32 @@ export async function GET(req: Request) {
     const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
 
+    // Fetch teacher details to get grade/class
+    const teacher = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { grade: true, class: true }
+    });
+
     const whereClause: any = {
-        teacherId: session.user.id
+        OR: [
+            { teacherId: session.user.id },
+            // If teacher has homeroom, show permissions from that class
+            ...(teacher?.grade && teacher?.class ? [{
+                student: {
+                    grade: teacher.grade,
+                    class: teacher.class
+                }
+            }] : [])
+        ]
     };
 
     if (search) {
-        whereClause.student = {
-            name: { contains: search, mode: 'insensitive' }
+        // AND logic with the OR group
+        // Prisma AND syntax with OR inside
+        whereClause.AND = {
+            student: {
+                name: { contains: search, mode: 'insensitive' }
+            }
         };
     }
 
