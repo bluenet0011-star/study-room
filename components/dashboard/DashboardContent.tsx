@@ -76,7 +76,9 @@ export default async function DashboardContent() {
 
                 {/* Timetable Widget (Student Only) */}
                 {role === 'STUDENT' && (
-                    <TimetableWidget grade={userGrade} classNum={userClass} />
+                    <div className="lg:col-span-2">
+                        <TimetableWidget grade={userGrade} classNum={userClass} />
+                    </div>
                 )}
 
                 {/* Notices (Streamed) */}
