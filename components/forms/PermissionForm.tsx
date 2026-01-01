@@ -64,11 +64,11 @@ export function PermissionForm({
     });
 
     // Notify parent of changes
-    useEffect(() => {
-        if (onChange) {
-            onChange(formData);
-        }
-    }, [formData, onChange]);
+    // Removed useEffect to prevent infinite re-render loop
+    const updateFormData = (newData: any) => {
+        setFormData(newData);
+        if (onChange) onChange(newData);
+    };
 
     const [isTeacherOpen, setIsTeacherOpen] = useState(false);
     const [selectedPeriods, setSelectedPeriods] = useState<number[]>([]); // Indices of selected periods
@@ -99,11 +99,12 @@ export function PermissionForm({
         if (newSelected.length > 0) {
             const startIdx = Math.min(...newSelected);
             const endIdx = Math.max(...newSelected);
-            setFormData((prev: any) => ({
-                ...prev,
+            const newData = {
+                ...formData,
                 startTime: PERIODS[startIdx].start,
                 endTime: PERIODS[endIdx].end
-            }));
+            };
+            updateFormData(newData);
         }
     };
 
@@ -123,7 +124,7 @@ export function PermissionForm({
                     <Switch
                         id="on-campus"
                         checked={formData.onCampus}
-                        onCheckedChange={(c: boolean) => setFormData({ ...formData, onCampus: c })}
+                        onCheckedChange={(c: boolean) => updateFormData({ ...formData, onCampus: c })}
                         className="data-[state=checked]:bg-green-600"
                     />
                     <span className={cn("text-sm", formData.onCampus ? "font-bold text-green-600" : "text-gray-500")}>교내</span>
@@ -133,7 +134,7 @@ export function PermissionForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label>유형</Label>
-                    <Select onValueChange={val => setFormData({ ...formData, type: val })} defaultValue={formData.type} value={formData.type}>
+                    <Select onValueChange={val => updateFormData({ ...formData, type: val })} defaultValue={formData.type} value={formData.type}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="MOVEMENT">이동 (교내)</SelectItem>
@@ -147,7 +148,7 @@ export function PermissionForm({
                     <Label>장소명</Label>
                     <Input
                         value={formData.location}
-                        onChange={e => setFormData({ ...formData, location: e.target.value })}
+                        onChange={e => updateFormData({ ...formData, location: e.target.value })}
                         placeholder="예: 1-1, OO병원, 자택"
                         required
                     />
@@ -184,15 +185,15 @@ export function PermissionForm({
                     <div className="space-y-2">
                         <Label>시작 일시</Label>
                         <div className="flex flex-col sm:flex-row gap-2">
-                            <Input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} required />
-                            <Input type="time" value={formData.startTime} onChange={e => setFormData({ ...formData, startTime: e.target.value })} required />
+                            <Input type="date" value={formData.startDate} onChange={e => updateFormData({ ...formData, startDate: e.target.value })} required />
+                            <Input type="time" value={formData.startTime} onChange={e => updateFormData({ ...formData, startTime: e.target.value })} required />
                         </div>
                     </div>
                     <div className="space-y-2">
                         <Label>종료 일시</Label>
                         <div className="flex flex-col sm:flex-row gap-2">
-                            <Input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} required />
-                            <Input type="time" value={formData.endTime} onChange={e => setFormData({ ...formData, endTime: e.target.value })} required />
+                            <Input type="date" value={formData.endDate} onChange={e => updateFormData({ ...formData, endDate: e.target.value })} required />
+                            <Input type="time" value={formData.endTime} onChange={e => updateFormData({ ...formData, endTime: e.target.value })} required />
                         </div>
                     </div>
                 </div>
@@ -226,7 +227,7 @@ export function PermissionForm({
                                                 key={t.id}
                                                 value={t.name}
                                                 onSelect={() => {
-                                                    setFormData({ ...formData, teacherId: t.id });
+                                                    updateFormData({ ...formData, teacherId: t.id });
                                                     setIsTeacherOpen(false);
                                                 }}
                                             >
