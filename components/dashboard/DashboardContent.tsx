@@ -19,12 +19,8 @@ export default async function DashboardContent() {
     let userGrade = 0;
     let userClass = 0;
     if (role === 'STUDENT') {
-        const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { grade: true, class: true }
-        });
-        userGrade = user?.grade || 0;
-        userClass = user?.class || 0;
+        userGrade = session.user.grade || 0;
+        userClass = session.user.class || 0;
     }
 
     const filteredLinks = NAV_LINKS.filter(link => link.roles.includes(role));

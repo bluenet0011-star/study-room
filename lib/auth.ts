@@ -38,6 +38,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (user) {
                 token.role = (user as any).role as Role;
                 token.id = user.id as string;
+                token.grade = user.grade || 0;
+                token.class = user.class || 0;
+                token.number = user.number || 0;
             }
             return token;
         },
@@ -45,6 +48,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (token && session.user) {
                 session.user.role = token.role as Role;
                 session.user.id = token.id as string;
+                session.user.grade = (token.grade as number) || 0;
+                session.user.class = (token.class as number) || 0;
+                session.user.number = (token.number as number) || 0;
             }
             return session;
         }

@@ -99,6 +99,8 @@ model Permission {
 
   @@index([studentId])
   @@index([teacherId])
+  @@index([start, end])
+  @@index([status])
 }
 
 model Notification {
@@ -127,6 +129,8 @@ model Notice {
   updatedAt   DateTime @updatedAt
 
   author User @relation("WrittenNotices", fields: [authorId], references: [id])
+
+  @@index([createdAt])
 }
 
 model EmptyPeriod {

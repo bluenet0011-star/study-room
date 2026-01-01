@@ -466,7 +466,9 @@ export default function TeacherPlanPage() {
                                                 <span className="text-sm font-medium">
                                                     {format(new Date(record.start), 'MM.dd HH:mm', { locale: ko })} ~ {format(new Date(record.end), 'HH:mm', { locale: ko })}
                                                 </span>
-                                                {record.location && <span className="text-xs text-blue-600 mt-0.5">[{record.location}]</span>}
+                                                {(record.location && record.location !== 'Unknown' && record.location.trim() !== ',') && (
+                                                    <span className="text-xs text-blue-600 mt-0.5">[{record.location}]</span>
+                                                )}
                                                 <span className="text-xs text-gray-400 truncate max-w-[200px]">{record.reason}</span>
                                             </div>
                                         </TableCell>
