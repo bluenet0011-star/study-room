@@ -183,7 +183,7 @@ export default function StatusPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col text-sm">
-                                            {p.location && <span className="font-semibold text-blue-600 mb-0.5 flex items-center gap-1">{getLocationIcon(p.location)} {p.location}</span>}
+                                            {p.location && <span className="font-semibold text-primary mb-0.5 flex items-center gap-1">{getLocationIcon(p.location)} {p.location}</span>}
                                             <span className="text-gray-600 truncate max-w-[150px]" title={p.reason}>{p.reason}</span>
                                         </div>
                                     </TableCell>
@@ -196,7 +196,7 @@ export default function StatusPage() {
                                         </Badge>
                                         {p.status === 'PENDING' && (
                                             <div className="flex gap-1 justify-center mt-2">
-                                                <Button size="sm" variant="ghost" onClick={() => handleEdit(p)} className="h-6 w-6 p-0 hover:text-blue-600">
+                                                <Button size="sm" variant="ghost" onClick={() => handleEdit(p)} className="h-6 w-6 p-0 hover:text-primary">
                                                     <Edit2 className="w-3 h-3" />
                                                 </Button>
                                                 <Button size="sm" variant="ghost" onClick={async () => {
@@ -245,7 +245,7 @@ export default function StatusPage() {
                                     </div>
                                     <div className="flex gap-2">
                                         {p.status === 'PENDING' && (
-                                            <Button size="sm" variant="outline" onClick={() => handleEdit(p)} className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50">
+                                            <Button size="sm" variant="outline" onClick={() => handleEdit(p)} className="h-7 text-xs border-primary/20 text-primary hover:bg-primary/10">
                                                 <Edit2 className="w-3 h-3 mr-1" /> 수정
                                             </Button>
                                         )}
@@ -265,7 +265,7 @@ export default function StatusPage() {
                                 </div>
                                 {(p.location || p.reason) && (
                                     <div className="text-sm bg-gray-50 p-2 rounded text-gray-600">
-                                        {p.location && <div className="text-blue-600 font-medium text-xs mb-1 flex items-center gap-1">{getLocationIcon(p.location)} {p.location}</div>}
+                                        {p.location && <div className="text-primary font-medium text-xs mb-1 flex items-center gap-1">{getLocationIcon(p.location)} {p.location}</div>}
                                         {p.reason}
                                     </div>
                                 )}

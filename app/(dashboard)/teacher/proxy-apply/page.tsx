@@ -40,8 +40,7 @@ export default function ProxyApplyPage() {
         startTime: '18:00',
         endTime: '21:00',
         reason: '',
-        location: '',
-        onCampus: true
+        location: ''
     });
 
     // Debounce search
@@ -114,10 +113,10 @@ export default function ProxyApplyPage() {
             <h1 className="text-2xl font-bold mb-2">대리 퍼미션 신청</h1>
             <p className="text-gray-500 mb-6">학생을 대신하여 퍼미션을 등록하고 즉시 승인합니다.</p>
 
-            <Card className="border-t-4 border-t-green-500 shadow-md">
+            <Card className="border-t-4 border-t-primary shadow-md">
                 <CardHeader className="bg-gray-50/50 pb-4">
                     <CardTitle className="text-xl flex items-center gap-2">
-                        <UserPlus className="w-5 h-5 text-green-600" />
+                        <UserPlus className="w-5 h-5 text-primary" />
                         학생 선택 및 신청서 작성
                     </CardTitle>
                 </CardHeader>
@@ -127,17 +126,17 @@ export default function ProxyApplyPage() {
                         <div className="space-y-2">
                             <Label>학생 검색</Label>
                             {selectedStudent ? (
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center animate-in fade-in zoom-in duration-300">
+                                <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg flex justify-between items-center animate-in fade-in zoom-in duration-300">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-700 font-bold">
+                                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
                                             {selectedStudent.name[0]}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-green-900 text-lg">{selectedStudent.name}</p>
-                                            <p className="text-sm text-green-700">{selectedStudent.grade}학년 {selectedStudent.class}반 {selectedStudent.number}번</p>
+                                            <p className="font-bold text-primary text-lg">{selectedStudent.name}</p>
+                                            <p className="text-sm text-primary/80">{selectedStudent.grade}학년 {selectedStudent.class}반 {selectedStudent.number}번</p>
                                         </div>
                                     </div>
-                                    <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="hover:bg-green-100 hover:text-green-800">
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="hover:bg-primary/10 hover:text-primary">
                                         창 닫기
                                     </Button>
                                 </div>
@@ -176,20 +175,6 @@ export default function ProxyApplyPage() {
 
                         {/* Form Section */}
                         <form onSubmit={handleSubmit} className={cn("space-y-6 transition-opacity duration-300", !selectedStudent && "opacity-50 pointer-events-none")}>
-
-                            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50/50">
-                                <Label htmlFor="on-campus" className="font-medium">교내 활동 여부</Label>
-                                <div className="flex items-center gap-2">
-                                    <span className={cn("text-sm", !formData.onCampus ? "font-bold text-gray-900" : "text-gray-500")}>교외</span>
-                                    <Switch
-                                        id="on-campus"
-                                        checked={formData.onCampus}
-                                        onCheckedChange={(c: boolean) => setFormData({ ...formData, onCampus: c })}
-                                        className="data-[state=checked]:bg-green-600"
-                                    />
-                                    <span className={cn("text-sm", formData.onCampus ? "font-bold text-green-600" : "text-gray-500")}>교내</span>
-                                </div>
-                            </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -254,7 +239,7 @@ export default function ProxyApplyPage() {
                                                 </div>
                                             </div>
                                         )}
-                                        <Button type="submit" className="w-full h-12 text-lg bg-green-600 hover:bg-green-700" disabled={loading || !selectedStudent || isPastTime}>
+                                        <Button type="submit" className="w-full h-12 text-lg" disabled={loading || !selectedStudent || isPastTime}>
                                             {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                                             대리 신청 및 승인
                                         </Button>

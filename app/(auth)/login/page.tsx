@@ -52,10 +52,10 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-blue-50 p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-red-50 p-4 relative overflow-hidden">
             {/* Abstract Background Shapes */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/50 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-100/50 rounded-full blur-3xl animate-pulse delay-700" />
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-100/50 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-3xl animate-pulse delay-700" />
 
             <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-8 relative z-10 animate-in fade-in zoom-in duration-500">
                 <div className="absolute top-4 right-4">
@@ -81,10 +81,10 @@ function LoginForm() {
                 </div>
 
                 <div className="flex flex-col items-center mb-10">
-                    <div className="w-16 h-16 bg-gradient-to-tr from-red-500 to-red-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-red-200 transform rotate-3">
+                    <div className="w-16 h-16 bg-gradient-to-tr from-primary to-primary/80 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-primary/20 transform rotate-3">
                         <GraduationCap className="w-8 h-8" />
                     </div>
-                    <h1 className="text-4xl font-black text-red-600 mb-2 tracking-tight">DGHS</h1>
+                    <h1 className="text-4xl font-black text-primary mb-2 tracking-tight">DGHS</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">

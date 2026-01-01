@@ -206,8 +206,12 @@ export default function PermissionInboxPage() {
             <div className="grid gap-4">
                 {sortedPermissions.length === 0 && !isFetching && <p className="text-gray-500 text-center py-8">대기 중인 요청이 없습니다.</p>}
 
-                {sortedPermissions.map(p => (
-                    <Card key={p.id} className={`${p.status === 'PENDING' ? 'border-l-4 border-l-blue-500 bg-blue-50/10' : 'opacity-80 hover:opacity-100 transition-opacity'}`}>
+                {sortedPermissions.map((p, i) => (
+                    <Card
+                        key={p.id}
+                        className={`${p.status === 'PENDING' ? 'border-l-4 border-l-primary bg-primary/5 shadow-md' : 'opacity-90 hover:opacity-100 bg-white hover:shadow-sm'} transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards`}
+                        style={{ animationDelay: `${i * 50}ms` }}
+                    >
                         {/* ... existing Card Content ... */}
                         <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 md:p-5 gap-4">
                             <div className="space-y-1.5 w-full">
@@ -232,7 +236,7 @@ export default function PermissionInboxPage() {
                                     <span>
                                         {format(new Date(p.start), 'HH:mm')} ~ {format(new Date(p.end), 'HH:mm')}
                                     </span>
-                                    {p.location && <span className="text-blue-600 text-sm">@ {p.location}</span>}
+                                    {p.location && <span className="text-primary text-sm">@ {p.location}</span>}
                                 </div>
                                 <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded-md block w-full sm:w-fit break-keep">
                                     {p.reason}

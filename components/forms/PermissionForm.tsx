@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
+
 
 interface PermissionFormProps {
     initialData?: any;
@@ -59,7 +59,6 @@ export function PermissionForm({
         endTime: '21:00',
         reason: '',
         location: '',
-        onCampus: true,
         ...initialData
     });
 
@@ -117,20 +116,6 @@ export function PermissionForm({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50/50">
-                <Label htmlFor="on-campus" className="font-medium">교내 활동 여부</Label>
-                <div className="flex items-center gap-2">
-                    <span className={cn("text-sm", !formData.onCampus ? "font-bold text-gray-900" : "text-gray-500")}>교외</span>
-                    <Switch
-                        id="on-campus"
-                        checked={formData.onCampus}
-                        onCheckedChange={(c: boolean) => updateFormData({ ...formData, onCampus: c })}
-                        className="data-[state=checked]:bg-green-600"
-                    />
-                    <span className={cn("text-sm", formData.onCampus ? "font-bold text-green-600" : "text-gray-500")}>교내</span>
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label>유형</Label>
@@ -167,13 +152,13 @@ export function PermissionForm({
                             className={cn(
                                 "h-auto py-2 flex flex-col items-center justify-center text-xs gap-1",
                                 isPeriodSelected(i)
-                                    ? "bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                                    ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
                                     : "hover:bg-gray-100"
                             )}
                             onClick={() => handlePeriodClick(i)}
                         >
                             <span className="font-bold">{p.label}</span>
-                            <span className={cn("text-[10px]", isPeriodSelected(i) ? "text-blue-100" : "text-gray-400")}>{p.start}~</span>
+                            <span className={cn("text-[10px]", isPeriodSelected(i) ? "text-primary-foreground/80" : "text-gray-400")}>{p.start}~</span>
                         </Button>
                     ))}
                 </div>

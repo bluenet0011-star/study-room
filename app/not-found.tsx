@@ -5,8 +5,8 @@ import { FileQuestion, Home } from "lucide-react";
 export default function NotFound() {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 text-center">
-            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
-                <FileQuestion className="w-12 h-12 text-red-600" />
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                <FileQuestion className="w-12 h-12 text-primary" />
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl mb-2">
                 404

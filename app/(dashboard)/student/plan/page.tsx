@@ -94,10 +94,10 @@ export default function StudyPlanPage() {
                 <p className="text-muted-foreground mt-1">자습 시간 중 이동이나 퍼미션을 신청합니다.</p>
             </div>
 
-            <Card className="border-t-4 border-t-blue-500 shadow-md">
-                <CardHeader className="bg-gray-50/50 pb-4">
-                    <CardTitle className="text-xl flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-blue-600" />
+            <Card className="border-t-4 border-t-primary shadow-md hover:shadow-lg transition-all duration-300">
+                <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent pb-4">
+                    <CardTitle className="text-xl flex items-center gap-2 text-gray-800">
+                        <Calendar className="w-5 h-5 text-primary" />
                         퍼미션 신청서 작성
                     </CardTitle>
                     <CardDescription>
